@@ -1,0 +1,36 @@
+# Node Generic
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+
+npm-debug.log
+node_modules
+jshint.xml
+
+# Linux
+*~
+
+# OS X
+.DS_Store
+Icon
+._*
+.Spotlight-V100
+
+# Vim
+.*.sw[a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# Sublime Text
+/*.sublime-project
+*.sublime-workspace

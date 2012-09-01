@@ -1,0 +1,14 @@
+{
+  "name": "js-openstackclient",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "xmlhttprequest": "*",
+    "async": "*"
+  },
+  "devDependencies": {
+    "chai": "1.2.0",
+    "mocha": ">= 1.3.2",
+    "jshint": "*"
+  }
+}
