@@ -111,8 +111,14 @@ var Client = Class.extend({
             params.error(xhr);
           }
           client.log(xhr.responseText);
-          var e = error.get_error(status);
-          throw e.apply(e, [status, xhr.responseText]);
+          var api_error, e = error.get_error(status);
+          try {
+            api_error = JSON.parse(xhr.responseText).error;
+          }
+          catch (problem) {
+            api_error = xhr.responseText;
+          }
+          throw e.apply(e, [status, api_error]);
         }
       }
     };

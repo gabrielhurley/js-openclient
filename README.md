@@ -32,7 +32,7 @@ fundamental API contract that this library provides.
 Using the client works like this:
 
 ```javascript
-var Keystone = require("<path to keystone>/v1.1/client");
+var Keystone = require("js-openstackclient").Keystone;
 
 var client = new Keystone({
     url: <auth url>,

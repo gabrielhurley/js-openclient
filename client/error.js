@@ -5,10 +5,15 @@ var NotImplemented = function (message) {
 };
 
 
-var ClientError = function (status, message) {
+var ClientError = function (status, api_error) {
   this.name = "ClientError";
   this.status = status;
-  this.message = "ClientError (" + this.status + "): " + message;
+  if (api_error.message) {
+    this.message = api_error.message;
+  }
+  else {
+    this.message = "ClientError (" + this.status + ")";
+  }
   return this;
 };
 
