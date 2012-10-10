@@ -1,7 +1,19 @@
 {
-  "name": "js-openstackclient",
+  "name": "openclient",
   "version": "1.0.2",
-  "private": true,
+  "description": "An opinionated client for RESTful APIs (particularly OpenStack's).",
+  "homepage": "https://github.com/gabrielhurley/js-openclient",
+  "keywords": ["client", "rest", "openstack"],
+  "author": {
+    "name": "Gabriel Hurley",
+    "email": "gabriel@strikeawe.com",
+    "url": "http://strikeawe.com"
+  },
+  "main": "index.js",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/gabrielhurley/js-openclient.git"
+  },
   "dependencies": {
     "xmlhttprequest": "*",
     "async": "*"

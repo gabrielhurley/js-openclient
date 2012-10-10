@@ -3,7 +3,11 @@ var base = require("./client/base"),
     Nova = require("./nova/v1.1/client");
 
 module.exports = {
-  base: base,
+  // Base functional components.
+  Client: base.Client,
+  Manager: base.Manager,
+
+  // OpenStack-specific clients.
   Keystone: Keystone,
   Nova: Nova
 };
