@@ -1,4 +1,4 @@
-# JavaScript OpenStack Client #
+# An Opinionated Client for RESTful APIs #
 
 This project aims to provide a very opinionated core client which can be used in
 either node.js or in the browser to communicate with a RESTful APIs, including
