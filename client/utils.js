@@ -3,11 +3,16 @@ module.exports = {
     // Constructs URLs with proper slashes regardless of leading/trailing
     // slashes on the arguments passed in.
     var url = "";
+
     for (var i = 0, j = arguments.length; i < j; i++) {
       var arg = arguments[i];
-      if (!arg) {
-        continue;
+
+      if (typeof(arg) === "undefined") {
+        throw new Error("Undefined argument at index " + i + " passed to urljoin.");
       }
+
+      arg = arg.toString();
+
       // Strip any preceding slashes since we append slashes to everything.
       if (arg.substr(0, 1) === "/") {
         arg = arg.substr(1);

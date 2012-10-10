@@ -96,7 +96,7 @@ var Client = Class.extend({
         if (status >= 200 && status < 300) {
           if (xhr.responseText) {
             result = JSON.parse(xhr.responseText);
-            if (result) {
+            if (result && params.result_key) {
               result = result[params.result_key];
             }
           }
@@ -220,6 +220,7 @@ var Manager = Class.extend({
 
   // Default endpoint type for API calls to talk to.
   endpoint_type: "publicURL",
+  urljoin: urljoin,  // For convenience.
 
   init: function (client) {
     this.client = client;
@@ -274,7 +275,10 @@ var Manager = Class.extend({
   prepare_params: function (params, url, plural_or_singular) {
     params = params || {};
     params.url = params.url || url;
-    params.result_key = params.result_key || this[plural_or_singular];
+    // Allow false-y values for the result key.
+    if (typeof(params.result_key) === "undefined") {
+      params.result_key = params.result_key || this[plural_or_singular];
+    }
     if (params.data) {
       params.data = this.prepare_data(params.data || {});
     }
@@ -286,6 +290,7 @@ var Manager = Class.extend({
   // Fetches a list of all objects available to the authorized user.
   // Default: GET to /<namespace>
   all: function (params) {
+    params.manager_method = "all";
     params = this.prepare_params(params, this.get_base_url(params), "plural");
     return this.client[this.method_map.get](params) || this;
   },
@@ -293,6 +298,7 @@ var Manager = Class.extend({
   // Fetches a single object based on the parameters passed in.
   // Default: GET to /<namespace>/<id>
   get: function (params) {
+    params.manager_method = "get";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.get](params) || this;
@@ -315,6 +321,7 @@ var Manager = Class.extend({
   // Creates a new object.
   // Default: POST to /<namespace>
   create: function (params) {
+    params.manager_method = "create";
     params = this.prepare_params(params, this.get_base_url(params), "singular");
     return this.client[this.method_map.create](params) || this;
   },
@@ -322,6 +329,7 @@ var Manager = Class.extend({
   // Updates an existing object.
   // Default: POST to /<namespace>/<id>
   update: function (params) {
+    params.manager_method = "update";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.update](params) || this;
@@ -332,6 +340,7 @@ var Manager = Class.extend({
   // Deletes an object.
   // Default: DELETE to /<namespace>/<id>
   del: function (params) {
+    params.manager_method = "del";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.del](params) || this;
