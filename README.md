@@ -1,8 +1,8 @@
 # JavaScript OpenStack Client #
 
 This project aims to provide a very opinionated core client which can be used in
-either node.js or in the browser to communicate with an OpenStack-compatible
-API.
+either node.js or in the browser to communicate with a RESTful APIs, including
+but not limited to any OpenStack-compatible API.
 
 The aims of this project are very specific:
 
@@ -10,29 +10,30 @@ The aims of this project are very specific:
    resource managers.
 
 2. Provide an extremely stable, backwards-compatible, carefully maintained
-   API to users of this library. Changes in OpenStack APIs should be managed
+   API to users of this library. Changes in remote APIs should be managed
    under-the-hood when necessary.
 
 2. Do not support every legacy authentication mechanism or every legacy vagary
-   of pre-Essex APIs. (It is intended for use on Essex or newer OpenStack
-   deployments running Keystone authentication __only__.)
+   of remote APIs. (The included OpenStack components are intended for use on
+   Essex or newer OpenStack deployments running Keystone authentication.)
 
-3. Do not mirror the APIs precisely. Instead provide a clean, consistent
-   interface for __every__ API resource and raise `NotImplemented` errors
+3. Do not mirror the APIs precisely. Instead provide a clean interface which is
+   consistent across __every__ API resource and raise `NotImplemented` errors
    when a method is not supported by the underlying API.
 
-4. Where possible, hacks can be added in on specific managers for methods
-   which can be emulated but may require multiple calls, etc.
+4. Where possible, hacks should be added in on specific managers to emulate
+   methods are not natively supported by the API. For example, `in_bulk`  may
+   be emulated by making multiple calls, etc.
 
-Under no circumstances should any client extending this library break the
+Any client extending this library should do the utmost to avoid breaking the
 fundamental API contract that this library provides.
 
 ## Example ##
 
-Using the client works like this:
+The following shows off a variety of the features of the client:
 
 ```javascript
-var Keystone = require("js-openstackclient").Keystone;
+var Keystone = require("openclient").Keystone;
 
 var client = new Keystone({
     url: <auth url>,
@@ -70,7 +71,15 @@ themselves.
 
 ## API Methods ##
 
-Documentation coming soon.
+The primary methods that the base `Manager` class exposes are:
+
+*. `all`: retrieve a list of all available resources.
+*. `get`: retrieve a single resource.
+*. `create`: create a new resource.
+*. `update`: update an existing resource.
+*. `del`: delete an existing resource.
+*. `filter`: retrieve a list of resources which match the filter criteria.
+*. `in_bulk`: retrieve each of the resources in a given list of ids.
 
 ## Running the tests ##
 
@@ -90,3 +99,8 @@ node <client dir>/tests/run.js
     --project=<admin project>
     --password=<admin password>
 ```
+
+## License ##
+
+This library is published under a BSD license and may be freely used in
+accordance with those terms.
