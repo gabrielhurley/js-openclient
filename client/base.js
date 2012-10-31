@@ -9,6 +9,7 @@ var Client = Class.extend({
 
   // Base client version
   VERSION: "1.0",
+  redacted: ['password'],
 
   init: function (options) {
     options = options || {};
@@ -26,6 +27,14 @@ var Client = Class.extend({
     if (this.debug) {
       console.log(Array.prototype.slice.apply(arguments).join(" "));
     }
+  },
+
+  redact: function (json_string) {
+    for (var i = 0; i < this.redacted.length; i++) {
+      var re = new RegExp('("' + this.redacted[i] + '":\\s?)"(([^\\"]|\\\\|\\")*)"', "g");
+      json_string = json_string.replace(re, '$1"*****"');
+    }
+    return json_string;
   },
 
   // Format headers to pretty-print for easier reading.
@@ -128,7 +137,7 @@ var Client = Class.extend({
       data = JSON.stringify(params.data);
       this.log("\nREQ:", method, params.url,
                this.format_headers(headers),
-               "\nbody:", data);
+               "\nbody:", this.redact(data));
       xhr.send(data);
     } else {
       this.log("\nREQ:", method, params.url, this.format_headers(headers));
