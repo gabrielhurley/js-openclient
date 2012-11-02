@@ -32,5 +32,11 @@ module.exports = {
       var replacement = mapping[lookup];
       return (typeof replacement === 'string' || typeof replacement === 'number') ? replacement : pattern;
     });
+  },
+
+  is_ans1_token: function (token) {
+    // Credit goes to Adam Young for figuring this out. See Keystone's
+    // source code for the logic/math that proves it.
+    return token.indexOf("MII") === 0 ? true : false;
   }
 };

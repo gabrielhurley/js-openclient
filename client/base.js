@@ -1,8 +1,10 @@
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest,
     async = require("async"),
     Class = require("./inheritance").Class,
+    crypto = require('crypto'),
     error = require("./error"),
-    urljoin = require("./utils").urljoin;
+    urljoin = require("./utils").urljoin,
+    is_ans1_token = require("./utils").is_ans1_token;
 
 
 var Client = Class.extend({
@@ -189,6 +191,11 @@ var Client = Class.extend({
 
     authenticated = function (result, xhr) {
       if (result.token.tenant) {
+        if (is_ans1_token(result.token.id)) {
+          // Rewrite the token id as the MD5 hash since we can use that in place
+          // of the full PKI-signed token (which is enormous).
+          result.token.id = crypto.createHash('md5').update(result.token.id).digest("hex");
+        }
         client.scoped_token = result.token;
         client.service_catalog = result.serviceCatalog;
         client.tenant = result.token.tenant;
