@@ -62,14 +62,17 @@ var Client = Class.extend({
 
   // Core method for making requests to API endpoints.
   // All other methods eventually route back to this one.
-  request: function (params) {
+  request: function (params, callback) {
     var xhr = new XMLHttpRequest(),
         client = this,
-        async = true,
+        async = !!callback,
         token = this.scoped_token || this.unscoped_token,
-        data, result, headers, method;
+        data,
+        result,
+        headers,
+        method;
 
-    if (typeof(params.async) !== "undefined") {
+    if (typeof params.async === 'boolean') {
       async = params.async;
     }
 
@@ -80,10 +83,12 @@ var Client = Class.extend({
     headers = params.headers || {};
     headers["Content-Type"] = "application/json";
     headers.Accept = "application/json";
+
     // Set our auth token if we have one.
     if (token) {
       headers['X-Auth-Token'] = token.id;
     }
+
     // Create our XMLHttpRequest and set headers.
     for (var header in headers) {
       if (headers.hasOwnProperty(header)) {
@@ -91,45 +96,63 @@ var Client = Class.extend({
       }
     }
 
+    function end (state, err) {
+      if (!err && params[state]) {
+        params[state](result, xhr);
+      }
+      if (params.complete) {
+        params.complete(result, xhr, err);
+      }
+      if (callback) callback(err);
+    }
+
     // Set up our state change handlers.
-    xhr.onreadystatechange = function () {
+    xhr.onload = function () {
       var status = parseInt(xhr.status, 10);
-      // Handle completed requests.
-      if (xhr.readyState === 4) {
-        // Log the response regardless of what it is.
-        client.log("\nRES:", method, params.url,
-                   "\nstatus:", status,
-                   async ? "\n" + xhr.getAllResponseHeaders() : "",
-                   "\nbody:", xhr.responseText);
-        // Response handling.
-        // Ignore informational codes for now (1xx).
-        // Handle successes (2xx).
-        if (status >= 200 && status < 300) {
-          if (xhr.responseText) {
-            result = JSON.parse(xhr.responseText);
-            if (result && params.result_key) {
-              result = result[params.result_key];
-            }
-          }
-          if (params.success) {
-            params.success(result, xhr);
+
+      // Log the response regardless of what it is.
+      client.log("\nRES:", method, params.url,
+                 "\nstatus:", status,
+                 async ? "\n" + xhr.getAllResponseHeaders() : "",
+                 "\nbody:", xhr.responseText);
+
+      // Response handling.
+      // Ignore informational codes for now (1xx).
+      // Handle successes (2xx).
+      if (status >= 200 && status < 300) {
+        if (xhr.responseText) {
+          result = JSON.parse(xhr.responseText);
+          if (result && params.result_key) {
+            result = result[params.result_key];
           }
         }
-        // Redirects are handled transparently by XMLHttpRequest.
-        // Handle errors (4xx, 5xx)
-        if (status >= 400) {
-          if (params.error) {
-            params.error(xhr);
-          }
-          client.log(xhr.responseText);
-          var api_error, e = error.get_error(status);
-          try {
-            api_error = JSON.parse(xhr.responseText).error;
-          }
-          catch (problem) {
-            api_error = xhr.responseText;
-          }
-          throw e.apply(e, [status, api_error]);
+        end('success', null);
+      }
+
+      // Redirects are handled transparently by XMLHttpRequest.
+      // Handle errors (4xx, 5xx)
+      if (status >= 400) {
+        if (params.error) {
+          params.error(xhr);
+        }
+        client.log(xhr.responseText);
+
+        var api_error,
+            e = error.get_error(status);
+
+        try {
+          api_error = JSON.parse(xhr.responseText).error;
+        }
+        catch (problem) {
+          api_error = xhr.responseText;
+        }
+
+        e = e.apply(e, [status, api_error]);
+
+        if (async) {
+          end('error', e);
+        } else {
+          throw e;
         }
       }
     };
@@ -145,51 +168,53 @@ var Client = Class.extend({
       this.log("\nREQ:", method, params.url, this.format_headers(headers));
       xhr.send();
     }
+
     // If this call is synchronous, return the result.
     if (!async) {
+      if (callback) callback();
       return result;
     }
+
     // Otherwise return null so the manager class can return itself for chaining.
     return;
   },
 
-  get: function (params) {
+  get: function (params, callback) {
     params.method = "GET";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
-  post: function (params) {
+  post: function (params, callback) {
     params.method = "POST";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
-  head: function (params) {
+  head: function (params, callback) {
     params.method = "HEAD";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
-  put: function (params) {
+  put: function (params, callback) {
     params.method = "PUT";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
-  patch: function (params) {
+  patch: function (params, callback) {
     params.method = "PATCH";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
-  del: function (params) {
+  del: function (params, callback) {
     params.method = "DELETE";
-    return this.request(params);
+    return this.request(params, callback);
   },
 
   // Authentication against the auth URL
-  authenticate: function (params) {
+  authenticate: function (params, callback) {
     var credentials = {},
-        client = this,
-        result, authenticated;
+        client = this;
 
-    authenticated = function (result, xhr) {
+    function authenticated(result, xhr) {
       if (result.token.tenant) {
         if (is_ans1_token(result.token.id)) {
           // Rewrite the token id as the MD5 hash since we can use that in place
@@ -224,9 +249,8 @@ var Client = Class.extend({
       url: urljoin(this.url, "/tokens"),
       data: credentials,
       result_key: "access",
-      async: false,
       success: authenticated
-    });
+    }, callback);
     return this;
   }
 });
@@ -305,19 +329,19 @@ var Manager = Class.extend({
 
   // Fetches a list of all objects available to the authorized user.
   // Default: GET to /<namespace>
-  all: function (params) {
+  all: function (params, callback) {
     params.manager_method = "all";
     params = this.prepare_params(params, this.get_base_url(params), "plural");
-    return this.client[this.method_map.get](params) || this;
+    return this.client[this.method_map.get](params, callback) || this;
   },
 
   // Fetches a single object based on the parameters passed in.
   // Default: GET to /<namespace>/<id>
-  get: function (params) {
+  get: function (params, callback) {
     params.manager_method = "get";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.get](params) || this;
+    return this.client[this.method_map.get](params, callback) || this;
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
@@ -336,30 +360,30 @@ var Manager = Class.extend({
 
   // Creates a new object.
   // Default: POST to /<namespace>
-  create: function (params) {
+  create: function (params, callback) {
     params.manager_method = "create";
     params = this.prepare_params(params, this.get_base_url(params), "singular");
-    return this.client[this.method_map.create](params) || this;
+    return this.client[this.method_map.create](params, callback) || this;
   },
 
   // Updates an existing object.
   // Default: POST to /<namespace>/<id>
-  update: function (params) {
+  update: function (params, callback) {
     params.manager_method = "update";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.update](params) || this;
+    return this.client[this.method_map.update](params, callback) || this;
   },
 
   // DELETE OPERATIONS
 
   // Deletes an object.
   // Default: DELETE to /<namespace>/<id>
-  del: function (params) {
+  del: function (params, callback) {
     params.manager_method = "del";
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.del](params) || this;
+    return this.client[this.method_map.del](params, callback) || this;
   }
 });
 
