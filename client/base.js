@@ -103,56 +103,59 @@ var Client = Class.extend({
       if (params.complete) {
         params.complete(result, xhr, err);
       }
-      if (callback) callback(err);
+      if (callback) {
+        callback(err);
+      }
     }
 
     // Set up our state change handlers.
-    xhr.onload = function () {
+    xhr.onreadystatechange = function () {
       var status = parseInt(xhr.status, 10);
+      if (xhr.readyState === 4) {
+        // Log the response regardless of what it is.
+        client.log("\nRES:", method, params.url,
+                   "\nstatus:", status,
+                   async ? "\n" + xhr.getAllResponseHeaders() : "",
+                   "\nbody:", xhr.responseText);
 
-      // Log the response regardless of what it is.
-      client.log("\nRES:", method, params.url,
-                 "\nstatus:", status,
-                 async ? "\n" + xhr.getAllResponseHeaders() : "",
-                 "\nbody:", xhr.responseText);
-
-      // Response handling.
-      // Ignore informational codes for now (1xx).
-      // Handle successes (2xx).
-      if (status >= 200 && status < 300) {
-        if (xhr.responseText) {
-          result = JSON.parse(xhr.responseText);
-          if (result && params.result_key) {
-            result = result[params.result_key];
+        // Response handling.
+        // Ignore informational codes for now (1xx).
+        // Handle successes (2xx).
+        if (status >= 200 && status < 300) {
+          if (xhr.responseText) {
+            result = JSON.parse(xhr.responseText);
+            if (result && params.result_key) {
+              result = result[params.result_key];
+            }
           }
-        }
-        end('success', null);
-      }
-
-      // Redirects are handled transparently by XMLHttpRequest.
-      // Handle errors (4xx, 5xx)
-      if (status >= 400) {
-        if (params.error) {
-          params.error(xhr);
-        }
-        client.log(xhr.responseText);
-
-        var api_error,
-            e = error.get_error(status);
-
-        try {
-          api_error = JSON.parse(xhr.responseText).error;
-        }
-        catch (problem) {
-          api_error = xhr.responseText;
+          end('success', null);
         }
 
-        e = e.apply(e, [status, api_error]);
+        // Redirects are handled transparently by XMLHttpRequest.
+        // Handle errors (4xx, 5xx)
+        if (status >= 400) {
+          if (params.error) {
+            params.error(xhr);
+          }
+          client.log(xhr.responseText);
 
-        if (async) {
-          end('error', e);
-        } else {
-          throw e;
+          var api_error,
+              e = error.get_error(status);
+
+          try {
+            api_error = JSON.parse(xhr.responseText).error;
+          }
+          catch (problem) {
+            api_error = xhr.responseText;
+          }
+
+          e = e.apply(e, [status, api_error]);
+
+          if (async) {
+            end('error', e);
+          } else {
+            throw e;
+          }
         }
       }
     };
@@ -171,7 +174,9 @@ var Client = Class.extend({
 
     // If this call is synchronous, return the result.
     if (!async) {
-      if (callback) callback();
+      if (callback) {
+        callback();
+      }
       return result;
     }
 
@@ -228,7 +233,7 @@ var Client = Class.extend({
       else {
         client.unscoped_token = result.token;
       }
-    };
+    }
 
     params = params || {};
     if (params.username && params.password) {
@@ -249,7 +254,8 @@ var Client = Class.extend({
       url: urljoin(this.url, "/tokens"),
       data: credentials,
       result_key: "access",
-      success: authenticated
+      success: authenticated,
+      async: params.async
     }, callback);
     return this;
   }
