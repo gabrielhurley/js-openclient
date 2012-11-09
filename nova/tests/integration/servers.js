@@ -6,7 +6,6 @@ server_data = {
   name: "test_server"
 };
 
-/*
 describe('Nova server manager', function () {
   before(function (done) {
     var servers;
@@ -15,10 +14,12 @@ describe('Nova server manager', function () {
     client = new Nova({
       url: process.env.OS_AUTH_URL,
       debug: process.env.OS_CLIENT_DEBUG
+
     }).authenticate({
       username: process.env.OS_USERNAME,
       password: process.env.OS_PASSWORD_INPUT,
-      project: process.env.OS_TENANT_NAME
+      project: process.env.OS_TENANT_NAME,
+      async: false
     });
 
     servers = client.servers.all({async: false});
@@ -30,8 +31,11 @@ describe('Nova server manager', function () {
     done();
   });
 
+  it('is ok', function () {
+    expect(true).to.be.ok
+  });
 
-  it('should be able to create a server', function (done) {
+  xit('should be able to create a server', function (done) {
     new_server = client.servers.create({
       data: server_data,
       async: false
@@ -43,7 +47,7 @@ describe('Nova server manager', function () {
   });
 
 
-  it('should be able to retrieve and delete a server', function (done) {
+  xit('should be able to retrieve and delete a server', function (done) {
     // Test chaining get, delete, and list calls asynchronously;
     client.servers.get({
       id: new_server.id,
@@ -62,4 +66,3 @@ describe('Nova server manager', function () {
     });
   });
 });
-*/
