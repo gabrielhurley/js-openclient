@@ -23,6 +23,7 @@ describe('Nova flavor manager', function () {
     client = new Nova({
       url: process.env.OS_AUTH_URL,
       debug: process.env.OS_CLIENT_DEBUG
+
     }).authenticate({
       username: process.env.OS_USERNAME,
       password: process.env.OS_PASSWORD_INPUT,

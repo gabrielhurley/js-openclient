@@ -19,6 +19,7 @@ describe('Keystone project manager', function () {
     client = new Keystone({
       url: process.env.OS_AUTH_URL,
       debug: process.env.OS_CLIENT_DEBUG
+
     }).authenticate({
       username: process.env.OS_USERNAME,
       password: process.env.OS_PASSWORD_INPUT,
