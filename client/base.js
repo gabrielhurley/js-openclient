@@ -65,7 +65,7 @@ var Client = Class.extend({
   request: function (params, callback) {
     var xhr = new XMLHttpRequest(),
         client = this,
-        async = !!callback,
+        async = true,
         token = this.scoped_token || this.unscoped_token,
         data,
         result,
@@ -96,20 +96,23 @@ var Client = Class.extend({
       }
     }
 
-    function end (state, err) {
-      if (!err && params[state]) {
-        params[state](result, xhr);
+    function end (err) {
+      if (err && params.error) {
+        params.error(err, xhr);
+      }
+      if (!err && params.success) {
+        params.success(result, xhr);
       }
       if (params.complete) {
         params.complete(result, xhr, err);
       }
       if (callback) {
-        callback(err);
+        callback(err, result, xhr);
       }
     }
 
     // Set up our state change handlers.
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = function () {  
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
         // Log the response regardless of what it is.
@@ -124,23 +127,23 @@ var Client = Class.extend({
         if (status >= 200 && status < 300) {
           if (xhr.responseText) {
             result = JSON.parse(xhr.responseText);
+
             if (result && params.result_key) {
               result = result[params.result_key];
             }
           }
-          end('success', null);
+
+          end();
         }
 
         // Redirects are handled transparently by XMLHttpRequest.
         // Handle errors (4xx, 5xx)
         if (status >= 400) {
-          if (params.error) {
-            params.error(xhr);
-          }
           client.log(xhr.responseText);
 
           var api_error,
-              e = error.get_error(status);
+              Err = error.get_error(status),
+              err;
 
           try {
             api_error = JSON.parse(xhr.responseText).error;
@@ -149,12 +152,12 @@ var Client = Class.extend({
             api_error = xhr.responseText;
           }
 
-          e = e.apply(e, [status, api_error]);
+          err = new Err(status, api_error);
 
           if (async) {
-            end('error', e);
+            end(err);
           } else {
-            throw e;
+            throw err;
           }
         }
       }
@@ -174,9 +177,6 @@ var Client = Class.extend({
 
     // If this call is synchronous, return the result.
     if (!async) {
-      if (callback) {
-        callback();
-      }
       return result;
     }
 
