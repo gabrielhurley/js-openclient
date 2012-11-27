@@ -1,42 +1,53 @@
-var NotImplemented = function (message) {
-  this.name = "NotImplemented";
-  this.message = message;
-  return this;
-};
+"use strict";
+
+var inherits = require('util').inherits;
 
 
-var ClientError = function (status, api_error) {
-  this.name = "ClientError";
+defineErrorType('NotFound', function (status, message) {
   this.status = status;
-  if (api_error.message) {
-    this.message = api_error.message;
-  }
-  else {
-    this.message = "ClientError (" + this.status + ")";
-  }
-  return this;
-};
+  this.message = this.name + ':' + message;
+});
 
 
-var NotFound = function (status, message) {
-  this.name = "NotFound";
+defineErrorType('NotImplemented', function (message) {
+  if (!message) this.message = this.name;
+});
+
+
+defineErrorType('ClientError', function (status, api_error) {
   this.status = status;
-  this.message = "NotFound: " + message;
-  return this;
-};
+  if (api_error && api_error.message) {
+    this.message = api_error.message
+  } else {
+    this.message = this.name + '(' + status + ')';
+  }
+});
 
 
 var code_map = {
-  404: NotFound,
-  503: NotImplemented
+  404: exports.NotFound,
+  503: exports.NotImplemented
 };
 
 
-module.exports = {
-  get_error: function (status) {
-    return code_map[status] || ClientError;
-  },
-  ClientError: ClientError,
-  NotFound: NotFound,
-  NotImplemented: NotImplemented
+exports.get_error = function (status) {
+  return code_map[status] || exports.ClientError;
 };
+
+
+function defineErrorType (name, init) {
+  var constructor = eval('(function ' + name + '(message){' + 
+    'if (this === exports) return new ' + name + '(message);' +
+    'if (init) init.apply(this, arguments);' +
+    'Error.call(this, this.message || message);' + 
+    'return this;' +
+  '})');
+
+  inherits(constructor, Error);
+
+  constructor.prototype.name = constructor.name;
+
+  exports[name] = constructor;
+
+  return constructor;
+}
