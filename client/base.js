@@ -17,10 +17,11 @@ var Client = Class.extend({
     options = options || {};
     this.debug = options.debug || false;
     this.url = options.url;
-    this.scoped_token = null;
-    this.unscoped_token = null;
-    this.service_catalog = [];
-    this.tenant = null;
+    this.scoped_token = options.scoped_token || null;
+    this.unscoped_token = options.unscoped_token || null;
+    this.service_catalog = options.service_catalog || [];
+    this.tenant = options.project || null;
+    this.user = options.user || null;
   },
 
   // Generic logging placeholder.
@@ -112,7 +113,7 @@ var Client = Class.extend({
     }
 
     // Set up our state change handlers.
-    xhr.onreadystatechange = function () {  
+    xhr.onreadystatechange = function () {
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
         // Log the response regardless of what it is.
@@ -220,18 +221,22 @@ var Client = Class.extend({
         client = this;
 
     function authenticated(result, xhr) {
-      if (result.token.tenant) {
+      if (result.token) {
         if (is_ans1_token(result.token.id)) {
           // Rewrite the token id as the MD5 hash since we can use that in place
           // of the full PKI-signed token (which is enormous).
           result.token.id = crypto.createHash('md5').update(result.token.id).digest("hex");
         }
-        client.scoped_token = result.token;
-        client.service_catalog = result.serviceCatalog;
-        client.tenant = result.token.tenant;
-      }
-      else {
-        client.unscoped_token = result.token;
+
+        if (result.token.tenant) {
+          client.scoped_token = result.token;
+          client.service_catalog = result.serviceCatalog;
+          client.tenant = result.token.tenant;
+          client.user = result.user;
+        }
+        else {
+          client.unscoped_token = result.token;
+        }
       }
     }
 
