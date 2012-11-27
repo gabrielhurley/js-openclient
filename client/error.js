@@ -1,7 +1,7 @@
 var inherits = require('util').inherits;
 
 
-defineErrorType('NotFount', function (status, message) {
+defineErrorType('NotFound', function (status, message) {
   this.status = status;
   this.message = this.name + ':' + message;
 });
