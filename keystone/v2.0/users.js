@@ -103,7 +103,17 @@ var UserManager = base.Manager.extend({
       setTimeout(wait_for_result, 100);
       return result_user;
     }
-  }
+  },
+
+  _updateEnabled: function (status, params, callback) {
+    var path = interpolate("{id}/OS-KSADM/{action}", {id: params.id, action: "enabled"}),
+        url = urljoin(this.get_base_url(params), path);
+    params.data = {id: params.id, enabled: status};
+    params = this.prepare_params(params, url, "singular");
+    return this.client.put(params, callback) || this;
+  },
+  enable: function (params, callback) { return this._updateEnabled(true, params, callback); },
+  disable: function (params, callback) { return this._updateEnabled(false, params, callback); }
 });
 
 

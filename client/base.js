@@ -97,7 +97,7 @@ var Client = Class.extend({
       }
     }
 
-    function end (err) {
+    function end(err) {
       if (err && params.error) {
         params.error(err, xhr);
       }
@@ -332,6 +332,8 @@ var Manager = Class.extend({
     }
     if (params.data) {
       params.data = this.prepare_data(params.data || {});
+    } else {
+      params.data = {};
     }
     return params;
   },
