@@ -131,6 +131,9 @@ var Client = Class.extend({
 
             if (result && params.result_key) {
               result = result[params.result_key];
+              if (params.parseResult) {
+                result = params.parseResult(result);
+              }
             }
           }
 
