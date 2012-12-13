@@ -19,6 +19,7 @@ var UserManager = base.Manager.extend({
     params.data = params.data || {};
     // Copy our data because we don't want to alter it across the
     // various API calls accidentally.
+    this.normalize_id(params);
     user_id = params.id;
     username = params.data.name;
     email = params.data.email;

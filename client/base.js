@@ -341,6 +341,13 @@ var Manager = Class.extend({
     return params;
   },
 
+  normalize_id: function (params) {
+    if (params.data && params.data.id) {
+      params.id = params.data.id;
+    }
+    return params;
+  },
+
   // READ OPERATIONS
 
   // Fetches a list of all objects available to the authorized user.
@@ -355,6 +362,7 @@ var Manager = Class.extend({
   // Default: GET to /<namespace>/<id>
   get: function (params, callback) {
     params.manager_method = "get";
+    params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.get](params, callback) || this;
@@ -386,6 +394,7 @@ var Manager = Class.extend({
   // Default: POST to /<namespace>/<id>
   update: function (params, callback) {
     params.manager_method = "update";
+    params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.update](params, callback) || this;
@@ -397,6 +406,7 @@ var Manager = Class.extend({
   // Default: DELETE to /<namespace>/<id>
   del: function (params, callback) {
     params.manager_method = "del";
+    params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[this.method_map.del](params, callback) || this;
