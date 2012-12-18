@@ -7,8 +7,8 @@ var FlavorManager = base.Manager.extend({
 
   get_base_url: function (params) {
     var base_url = this._super(params);
-    if (params.detail) {
-      base_url = this.urljoin(base_url, 'detail');
+    if (!params.id) {  // If this is a "list" call...
+      base_url = this.urljoin(base_url, 'detail');  // Always fetch the details.
     }
     return base_url;
   },
