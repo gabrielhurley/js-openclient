@@ -19,9 +19,13 @@ function defineErrorType(name, init) {
 
 defineErrorType('NotFound', function (status, message) {
   this.status = status;
-  this.message = this.name + ':' + message;
+  this.message = message;
 });
 
+defineErrorType('Conflict', function (status, message) {
+  this.status = status;
+  this.message = message;
+});
 
 defineErrorType('NotImplemented', function (message) {
   if (!message) {
@@ -42,6 +46,7 @@ defineErrorType('ClientError', function (status, api_error) {
 
 var code_map = {
   404: exports.NotFound,
+  409: exports.Conflict,
   503: exports.NotImplemented
 };
 

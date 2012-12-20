@@ -146,17 +146,19 @@ var Client = Class.extend({
           client.log(xhr.responseText);
 
           var api_error,
+              message,
               Err = error.get_error(status),
               err;
 
           try {
             api_error = JSON.parse(xhr.responseText).error;
+            message = api_error.message;
           }
           catch (problem) {
-            api_error = xhr.responseText;
+            message = xhr.responseText;
           }
 
-          err = new Err(status, api_error);
+          err = new Err(status, message);
 
           if (async) {
             end(err);

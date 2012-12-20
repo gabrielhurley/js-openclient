@@ -8,7 +8,7 @@ module.exports = {
       var arg = arguments[i];
 
       if (typeof(arg) === "undefined") {
-        throw new Error("Undefined argument at index " + i + " passed to urljoin.");
+        continue;
       }
 
       arg = arg.toString();
