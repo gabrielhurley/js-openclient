@@ -6,9 +6,9 @@ var SecurityGroupRuleManager = base.Manager.extend({
   namespace: "os-security-group-rules",
   singular: "security_group_rule",
 
-  get: function (params) { throw error.NotImplemented; },
-  all: function (params) { throw error.NotImplemented; },
-  update: function (params) { throw error.NotImplemented; },
+  get: function (params) { throw new error.NotImplemented(); },
+  all: function (params) { throw new error.NotImplemented(); },
+  update: function (params) { throw new error.NotImplemented(); },
 });
 
 

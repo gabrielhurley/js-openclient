@@ -9,8 +9,8 @@ var UserRoleManager = base.Manager.extend({
   prepare_namespace: function (params) {
     return interpolate(this.namespace, {tenant_id: params.project, user_id: params.user});
   },
-  get: function (params) { throw error.NotImplemented; },
-  create: function (params) { throw error.NotImplemented; },
+  get: function (params) { throw new error.NotImplemented(); },
+  create: function (params) { throw new error.NotImplemented(); },
   all: function (params) {
     // Keystone's role listing URL doesn't have the extension affix in the URL.
     params.url = this.get_base_url(params).replace("/OS-KSADM", "");

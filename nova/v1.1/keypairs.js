@@ -31,8 +31,8 @@ var KeypairManager = base.Manager.extend({
     return this._super(params);
   },
 
-  get: function (params) { throw error.NotImplemented; },
-  update: function (params) { throw error.NotImplemented; }
+  get: function (params) { throw new error.NotImplemented(); },
+  update: function (params) { throw new error.NotImplemented(); }
 });
 
 

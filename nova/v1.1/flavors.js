@@ -13,7 +13,7 @@ var FlavorManager = base.Manager.extend({
     return base_url;
   },
 
-  update: function (params) { throw error.NotImplemented; }
+  update: function (params) { throw error.NotImplemented(); }
 });
 
 

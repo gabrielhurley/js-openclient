@@ -374,13 +374,13 @@ var Manager = Class.extend({
   // Fetches a list of objects based on the filter criteria passed in.
   // Default: GET to /<namespace>?<query params>
   filter: function (params) {
-    throw error.NotImplemented;
+    throw new error.NotImplemented();
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
   // Default: GET to /<namespace>?<list of ids>
   in_bulk: function (params) {
-    throw error.NotImplemented;
+    throw new error.NotImplemented();
   },
 
   // WRITE OPERATIONS

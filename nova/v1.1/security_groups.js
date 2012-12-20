@@ -6,7 +6,7 @@ var SecurityGroupManager = base.Manager.extend({
   namespace: "os-security-groups",
   plural: "security_groups",
 
-  update: function (params) { throw error.NotImplemented; }
+  update: function (params) { throw new error.NotImplemented(); }
 });
 
 

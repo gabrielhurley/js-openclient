@@ -15,7 +15,12 @@ var ServerManager = base.Manager.extend({
   },
 
   // TODO(gabriel): Add in server creation logic...
-  create: function (params) { throw error.NotImplemented; },
+  create: function (params) {
+    if (!params.data.name) {
+      params.data.name = null;
+    }
+    return this._super(params);
+  },
 
   _action: function (params, action, info, callback) {
     var url = urljoin(this.get_base_url(params), params.id, "action");
