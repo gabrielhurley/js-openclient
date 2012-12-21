@@ -19,6 +19,14 @@ var ServerManager = base.Manager.extend({
     if (!params.data.name) {
       params.data.name = null;
     }
+    if (params.data.security_groups) {
+      if (typeof params.data.security_groups !== "array") {
+        params.data.security_groups = [params.data.security_groups];
+      }
+      params.data.security_groups = params.data.security_groups.map(function (sg) {
+        return {"name": sg};
+      });
+    }
     return this._super(params);
   },
 
