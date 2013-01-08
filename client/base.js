@@ -338,7 +338,10 @@ var Manager = Class.extend({
     if (typeof(params.result_key) === "undefined") {
       params.result_key = params.result_key || this[plural_or_singular];
     }
-    if (params.data) {
+
+    // Ensure that we only wrap the data object if data is present and
+    // contains actual values.
+    if (params.data && typeof params.data === "object" && Object.keys(params.data).length > 0) {
       params.data = this.prepare_data(params.data || {});
     } else {
       params.data = {};
