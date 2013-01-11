@@ -170,7 +170,7 @@ var Client = Class.extend({
     };
 
     // Finally, send out the request.
-    if (params.data) {
+    if (params.data && Object.keys(params.data).length > 0) {  // Data is guaranteed to be an object by this point.
       data = JSON.stringify(params.data);
       this.log("\nREQ:", method, params.url,
                this.format_headers(headers),
