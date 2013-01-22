@@ -135,6 +135,10 @@ var Client = Class.extend({
                 result = params.parseResult(result);
               }
             }
+          } else {
+            if (params.parseHeaders) {
+              result = params.parseHeaders(xhr);
+            }
           }
 
           end();
@@ -363,7 +367,7 @@ var Manager = Class.extend({
   all: function (params, callback) {
     params.manager_method = "all";
     params = this.prepare_params(params, this.get_base_url(params), "plural");
-    return this.client[this.method_map.get](params, callback) || this;
+    return this.client[params.http_method || this.method_map.get](params, callback) || this;
   },
 
   // Fetches a single object based on the parameters passed in.
@@ -373,7 +377,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.get](params, callback) || this;
+    return this.client[params.http_method || this.method_map.get](params, callback) || this;
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
@@ -383,9 +387,34 @@ var Manager = Class.extend({
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
-  // Default: GET to /<namespace>?<list of ids>
+  // Default *SHOULD BE BUT ISN'T*: GET to /<namespace>?<list of ids>
+  // In reality the default is to mock this method with parallel get calls.
   in_bulk: function (params) {
-    throw new error.NotImplemented();
+    var manager = this,
+        lookups = [],
+        success = params.success,
+        error = params.error;
+
+    if (params.success) delete params.success;
+    if (params.error) delete params.error;
+
+
+    params.data.ids.forEach(function (id) {
+      lookups.push(function (done) {
+        var cloned_params = JSON.parse(JSON.stringify(params));
+        delete cloned_params.data.ids;
+        cloned_params.data.id = id;
+        cloned_params.success = function (result, xhr) { return done(null, result); };
+        cloned_params.error = function (err, xhr) { return done(err); };
+        manager.get(cloned_params);
+      });
+    });
+
+    async.parallel(lookups, function (err, results) {
+      if (err && error) return error(err);
+      if (success) success(results);
+      return results;
+    });
   },
 
   // WRITE OPERATIONS
@@ -395,7 +424,7 @@ var Manager = Class.extend({
   create: function (params, callback) {
     params.manager_method = "create";
     params = this.prepare_params(params, this.get_base_url(params), "singular");
-    return this.client[this.method_map.create](params, callback) || this;
+    return this.client[params.http_method || this.method_map.create](params, callback) || this;
   },
 
   // Updates an existing object.
@@ -405,7 +434,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.update](params, callback) || this;
+    return this.client[params.http_method || this.method_map.update](params, callback) || this;
   },
 
   // DELETE OPERATIONS
@@ -417,7 +446,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[this.method_map.del](params, callback) || this;
+    return this.client[params.http_method || this.method_map.del](params, callback) || this;
   }
 });
 

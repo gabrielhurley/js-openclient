@@ -16,6 +16,29 @@ var ImageManager = base.Manager.extend({
     return base_url;
   },
 
+  get: function (params) {
+    params.http_method = "head";
+
+    params.parseHeaders = function (xhr) {
+      var result = {properties: {}},
+          lines = xhr.getAllResponseHeaders().split(/\r\n|\r|\n/);
+
+      lines.forEach(function (line) {
+        var matches = line.match(/x-image-meta-(.*)?: (.*)/);
+        if (matches) {
+          if (matches[1].indexOf('property-') === 0) {
+            result.properties[matches[1].substring(9)] = matches[2];
+          } else {
+            result[matches[1]] = matches[2];
+          }
+        }
+      });
+
+      return result;
+    };
+    return this._super(params);
+  },
+
   bootable: function (params) {
     var manager = this;
     params.parseResult = function (result) {

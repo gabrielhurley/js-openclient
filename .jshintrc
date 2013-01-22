@@ -47,7 +47,7 @@
     "laxbreak"      : true,   // Tolerate unsafe line breaks e.g. `return [\n] x` without semicolons.
     "bitwise"       : true,   // Prohibit bitwise operators (&, |, ^, etc.).
     "boss"          : false,  // Tolerate assignments inside if, for & while. Usually conditions & loops are for comparison, not assignments.
-    "curly"         : true,   // Require {} for every new block or scope.
+    "curly"         : false,   // Require {} for every new block or scope.
     "eqeqeq"        : true,   // Require triple equals i.e. `===`.
     "eqnull"        : false,  // Tolerate use of `== null`.
     "evil"          : false,  // Tolerate use of `eval`.
@@ -57,7 +57,7 @@
     "latedef"       : true,   // Prohibit variable use before definition.
     "loopfunc"      : false,  // Allow functions to be defined within loops.
     "noarg"         : true,   // Prohibit use of `arguments.caller` and `arguments.callee`.
-    "regexp"        : true,   // Prohibit `.` and `[^...]` in regular expressions.
+    "regexp"        : false,   // Prohibit `.` and `[^...]` in regular expressions.
     "regexdash"     : false,  // Tolerate unescaped last dash i.e. `[-...]`.
     "scripturl"     : true,   // Tolerate script-targeted URLs.
     "shadow"        : false,  // Allows re-define variables later in code e.g. `var x=1; x=2;`.
