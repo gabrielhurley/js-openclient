@@ -69,7 +69,7 @@ var ServerManager = base.Manager.extend({
 
   _action: function (params, action, info, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "action");
-    if (params.data.id) delete params.data.id;
+    if (params.data && params.data.id) delete params.data.id;
     params = this.prepare_params(params, url, "singular");
     params.data[action] = info || null;
     return this.client.post(params, callback) || this;
