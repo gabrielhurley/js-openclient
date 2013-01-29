@@ -1,8 +1,8 @@
 # An Opinionated Client for RESTful APIs #
 
 This project aims to provide a very opinionated core client which can be used in
-either node.js or in the browser to communicate with a RESTful APIs, including
-but not limited to any OpenStack-compatible API.
+either node.js or in the browser (browser support not yet complete) to communicate
+with a RESTful APIs, including but not limited to any OpenStack-compatible API.
 
 The aims of this project are very specific:
 
@@ -21,7 +21,7 @@ The aims of this project are very specific:
    consistent across __every__ API resource and raise `NotImplemented` errors
    when a method is not supported by the underlying API.
 
-4. Where possible, hacks should be added in on specific managers to emulate
+4. Where possible, hacks should be added on specific managers to emulate
    methods are not natively supported by the API. For example, `in_bulk`  may
    be emulated by making multiple calls, etc.
 
@@ -44,24 +44,31 @@ var client = new Keystone({
     project: <project name>
   });
 
-// Calls default to being asynchronous and can be chained together.
+// Calls default to being asynchronous.
+// (synchronous calls are currently supported but not
+// recommended and may be removed in a future version)
 client.projects.all({
   endpoint_type: "adminURL",  // Defaults to "publicURL".
 
   // Callbacks receive the result of the call;
   success: function (projects) {
     var updated_project, project = projects[0];
-
-    // Synchronous calls return the result directly.
-    updated_project = client.projects.update({
-      async: false,
+    client.projects.update({
       endpoint_type: "adminURL",
       id: project.id,
       data: {
         name: <new name>
+      },
+      success: function (updated_project) {
+        updated_project.name === <new name>;  // true
+      },
+      error: function (err) {
+        console.error(err);
       }
     });
-    updated_project.name === <new name>;  // true
+  },
+  error: function (err) {
+    console.error(err);
   }
 });
 ```
@@ -73,13 +80,13 @@ themselves.
 
 The primary methods that the base `Manager` class exposes are:
 
-*. `all`: retrieve a list of all available resources.
-*. `get`: retrieve a single resource.
-*. `create`: create a new resource.
-*. `update`: update an existing resource.
-*. `del`: delete an existing resource.
-*. `filter`: retrieve a list of resources which match the filter criteria.
-*. `in_bulk`: retrieve each of the resources in a given list of ids.
+* `all`: retrieve a list of all available resources.
+* `get`: retrieve a single resource.
+* `create`: create a new resource.
+* `update`: update an existing resource.
+* `del`: delete an existing resource.
+* `in_bulk`: retrieve each of the resources in a given list of ids.
+* `filter`: retrieve a list of resources which match the filter criteria. (not yet implemented in most cases)
 
 ## Running the tests ##
 
