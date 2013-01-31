@@ -15,6 +15,11 @@ var ServerManager = base.Manager.extend({
     return base_url;
   },
 
+  all: function (params) {
+    if (typeof params.detail === "undefined") params.detail = true;
+    return this._super(params);
+  },
+
   create: function (params) {
     if (!params.data.name) {
       params.data.name = null;
