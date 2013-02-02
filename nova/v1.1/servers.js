@@ -1,5 +1,4 @@
 var base = require("../../client/base"),
-    Cinder = require("../../cinder/v1/client"),
     error = require("../../client/error"),
     urljoin = require("../../client/utils").urljoin;
 
@@ -49,7 +48,26 @@ var ServerManager = base.Manager.extend({
     return this.client.get(params) || this;
   },
 
+  attach: function (params) {
+    var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-volume_attachments");
+    params.result_key = 'volumeAttachment';
+    params.data.device = params.data.device || null;
+    params = this.prepare_params(params, url, "singular");
+    params.data.volumeAttachment = params.data.server;
+    delete params.data.server;
+    return this.client.post(params) || this;
+  },
+
+  detach: function (params) {
+    var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-volume_attachments", params.data.volumeId);
+    delete params.data;
+    params = this.prepare_params(params, url, "singular");
+    return this.client.del(params) || this;
+  },
+
   volumes: function (params) {
+    var Cinder = require("../../cinder/v1/client");  // Avoid circular imports.
+
     var cinder = new Cinder(this.client),
         success = params.success;
 
