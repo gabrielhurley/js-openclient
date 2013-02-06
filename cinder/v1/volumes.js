@@ -64,6 +64,7 @@ var VolumeManager = base.Manager.extend({
           // Detach all of them in parallel.
           if (volume.attachments.length) {
             var calls = [];
+
             volume.attachments.forEach(function (attachment) {
               calls.push(function (next) {
                 nova.servers.detach({
@@ -85,6 +86,8 @@ var VolumeManager = base.Manager.extend({
               if (err) params.error(err);
               else params.success(null, {status: 202});
             });
+          } else {
+            params.success(null, {status: 202});
           }
         },
         error: params.error
