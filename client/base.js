@@ -68,6 +68,7 @@ var Client = Class.extend({
         client = this,
         async = true,
         token = this.scoped_token || this.unscoped_token,
+        dataType,
         data,
         result,
         headers,
@@ -177,8 +178,17 @@ var Client = Class.extend({
       }
     };
 
+    dataType = typeof params.data;
+
     // Finally, send out the request.
-    if (params.data && Object.keys(params.data).length > 0) {  // Data is guaranteed to be an object by this point.
+    if (dataType === 'string' || dataType === 'number') {
+      this.log("\nREQ:", method, params.url,
+               this.format_headers(headers),
+               "\nbody:", params.data);
+      xhr.send(params.data);
+
+    } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
+      // Data is guaranteed to be an object by this point.
       data = JSON.stringify(params.data);
       this.log("\nREQ:", method, params.url,
                this.format_headers(headers),
@@ -327,6 +337,8 @@ var Manager = Class.extend({
   // form of the resource's name; this method allows customization of that
   // if necessary.
   prepare_data: function (data) {
+    if (this.use_raw_data) return data;
+
     var wrapped_data = {};
     wrapped_data[this.singular] = data;
     return wrapped_data;
