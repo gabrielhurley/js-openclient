@@ -77,12 +77,16 @@ var Client = Class.extend({
       async = params.async;
     }
 
+    // This is mainly necessary due to Glance needing the Content-Length
+    // header set on PUT requests, but xmlhttprequest only setting it for POST.
+    if (params.allow_headers) xhr.setDisableHeaderCheck(true);
+
     xhr.open(params.method, params.url, async);
 
     method = params.method.toUpperCase();
 
     headers = params.headers || {};
-    headers["Content-Type"] = "application/json";
+    if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
     headers.Accept = "application/json";
 
     // Set our auth token if we have one.

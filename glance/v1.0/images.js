@@ -1,4 +1,27 @@
-var base = require("../../client/base");
+var base = require("../../client/base"),
+    error = require("../../client/error");
+
+
+function _image_meta_to_headers(data) {
+  var headers = {},
+      non_meta_props = ['name', 'is_public', 'disk_format', 'container_format'];
+
+  data = data || {};
+
+  (Object.keys(data)).forEach(function (key) {
+    if (key === "id") return;
+
+    if (non_meta_props.indexOf(key) !== -1) {
+      headers['x-image-meta-' + key] = "" + data[key];
+    } else {
+      headers['x-image-meta-property-' + key] = "" + data.properties[key];
+    }
+  });
+
+  headers['x-glance-registry-purge-props'] = "false";
+
+  return headers;
+}
 
 
 var ImageManager = base.Manager.extend({
@@ -14,6 +37,18 @@ var ImageManager = base.Manager.extend({
       base_url = this.urljoin(base_url, 'detail');  // Always fetch the details.
     }
     return base_url;
+  },
+
+  create: function (params) { throw new error.NotImplemented(); },
+
+  update: function (params) {
+    params.id = params.id || params.data.id;
+    params.headers = _image_meta_to_headers(params.data);
+    params.allow_headers = true;
+    params.headers['Content-Type'] = 'application/octet-stream';
+    params.headers['Content-Length'] = 0;
+    delete params.data;
+    return this._super(params);
   },
 
   get: function (params) {

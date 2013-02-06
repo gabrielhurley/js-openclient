@@ -1,4 +1,5 @@
-var base = require("../../client/base"),
+var async = require('async'),
+    base = require("../../client/base"),
     error = require("../../client/error"),
     interpolate = require("../../client/utils").interpolate;
 
@@ -47,17 +48,26 @@ var ProjectMembershipManager = base.Manager.extend({
       user: params.id,
       endpoint_type: endpoint_type,
       success: function (roles, xhr) {
+        var calls = [];
         roles.forEach(function (role) {
-          user_roles_manager.del({
-            id: role.id,
-            project: params.data.project,
-            user: params.id,
-            endpoint_type: endpoint_type,
-            success: function () {
-              params.success(null, xhr);
-            },
-            error: params.error
+          calls.push(function (done) {
+            user_roles_manager.del({
+              id: role.id,
+              project: params.data.project,
+              user: params.id,
+              endpoint_type: endpoint_type,
+              success: function () {
+                done(null);
+              },
+              error: function (err) {
+                done(err);
+              }
+            });
           });
+        });
+        async.parallel(calls, function (err) {
+          if (err) return params.err(err);
+          return params.success(null, {status: 200});
         });
       },
       error: params.error

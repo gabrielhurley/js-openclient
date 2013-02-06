@@ -117,6 +117,13 @@ var ServerManager = base.Manager.extend({
   rescue: function (params) { return this._action(params, "rescue"); },
   unrescue: function (params) { return this._action(params, "unrescue"); },
 
+  snapshot: function (params) {
+    var extra = {name: params.data.name, metadata: {}};
+    params.id = params.id || params.data.id;
+    params.data = {};
+    return this._action(params, "createImage", extra);
+  },
+
   getConsole: function (params) {
     var instance_id = params.id || params.data.id,
         type = params.data.type || "novnc",
@@ -132,7 +139,6 @@ var ServerManager = base.Manager.extend({
   getLog: function (params) { return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}); }
 
   // TODO: Methods implemented by python-novaclient which are not yet implemented here...
-  // create_image
   // add_floating_ip
   // remove_floating_ip
   // add_fixed_ip
