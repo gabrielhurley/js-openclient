@@ -136,11 +136,80 @@ var ServerManager = base.Manager.extend({
     return this._action(params, action, {"type": type});
   },
 
-  getLog: function (params) { return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}); }
+  getLog: function (params) { return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}); },
+
+  add_floating_ip: function (params) {
+    var manager = this;
+
+    function finish(address) {
+      delete params.data;
+      return manager._action(params, 'addFloatingIp', {'address': address});
+    }
+
+    params.id = params.id || params.data.id;
+    if (params.data && params.data.address) {
+      return finish(params.data.address);
+    } else {
+      var client = this.client;
+      return client.floating_ips.all({
+        success: function (ips) {
+          var available;
+
+          ips.forEach(function (ip) {
+            if (available) return;
+            if (!ip.instance_id) available = ip.ip;
+          });
+
+          if (available) {
+            return finish(available);
+          } else {
+            client.floating_ips.create({
+              success: function (ip) {
+                return finish(ip.ip);
+              },
+              error: params.error
+            });
+          }
+        },
+        error: params.error
+      });
+    }
+  },
+
+  remove_floating_ip: function (params) {
+    var manager = this;
+
+    function finish(address) {
+      delete params.data;
+      return manager._action(params, 'removeFloatingIp', {'address': address});
+    }
+
+    params.id = params.id || params.data.id;
+    if (params.data && params.data.address) {
+      return finish(params.data.address);
+    } else {
+      var client = this.client;
+      return client.floating_ips.all({
+        success: function (ips) {
+          var associated;
+
+          ips.forEach(function (ip) {
+            if (associated) return;
+            if (ip.instance_id === params.id) associated = ip.ip;
+          });
+
+          if (associated) {
+            return finish(associated);
+          } else {
+            params.error('No floating IP associated with this instance.');
+          }
+        },
+        error: params.error
+      });
+    }
+  }
 
   // TODO: Methods implemented by python-novaclient which are not yet implemented here...
-  // add_floating_ip
-  // remove_floating_ip
   // add_fixed_ip
   // remove_fixed_ip
   // add_security_group
