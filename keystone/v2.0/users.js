@@ -12,9 +12,10 @@ var UserManager = base.Manager.extend({
     var manager = this,
         pattern = "{id}/OS-KSADM/{action}",
         result = null,
+        success = params.success,
+        error = params.error,
         url, user_id, username, email, default_project, enabled, password,
-        update_basics, update_enabled, update_project, update_password,
-        assemble_data, wait_for_result, result_user;
+        update_basics, update_enabled, update_project, update_password;
 
     params.data = params.data || {};
     // Copy our data because we don't want to alter it across the
@@ -27,8 +28,72 @@ var UserManager = base.Manager.extend({
     enabled = params.data.enabled;
     password = params.data.password;
 
-    assemble_data = function (err, results) {
-      result_user = {id: params.id};
+    update_basics = function (done) {
+      var result, new_params = params;
+      if (username || email) {
+        params.data = {id: user_id, name: username, email: email};
+        params.success = function (result) { done(null, result); };
+        params.error = function (err) { done(err); };
+        manager._super(params);
+      } else {
+        done(null);
+      }
+    };
+
+    update_enabled = function (done) {
+      var result;
+      if (typeof(enabled) !== "undefined") {
+        params.url = urljoin(manager.get_base_url(params),
+                             interpolate(pattern,
+                                         {id: params.id, action: "enabled"}));
+        params.data = {id: user_id, enabled: enabled};
+        params.success = function (result) { done(null, result); };
+        params.error = function (err) { done(err); };
+        manager._super(params);
+      } else {
+        done(null);
+      }
+    };
+
+    update_project = function (done) {
+      var result;
+      if (default_project) {
+        params.url = urljoin(manager.get_base_url(params),
+                             interpolate(pattern,
+                                         {id: params.id, action: "tenant"}));
+        params.data = {id: user_id, tenantId: default_project};
+        params.success = function (result) { done(null, result); };
+        params.error = function (err) { done(err); };
+        manager._super(params);
+      } else {
+        done(null);
+      }
+    };
+
+    update_password = function (done) {
+      var result;
+      if (password) {
+        params.url = urljoin(manager.get_base_url(params),
+                             interpolate(pattern,
+                                         {id: params.id, action: "password"}));
+        params.data = {id: user_id, password: password};
+        params.success = function (result) { done(null, result); };
+        params.error = function (err) { done(err); };
+        manager._super(params);
+      } else {
+        done(null);
+      }
+    };
+
+    async.parallel({
+      basics: update_basics,
+      enabled: update_enabled,
+      project: update_project,
+      password: update_password
+    }, function (err, results) {
+      if (err) error(err);
+
+      var result_user = {id: params.id};
       if (results.basics) {
         result_user.name = results.basics.name;
         if (results.basics.extra && results.basics.extra.email) {
@@ -39,71 +104,8 @@ var UserManager = base.Manager.extend({
         result_user.enabled = results.enabled.extra.enabled;
       }
       // FIXME(gabriel): This should fill in the rest of the details.
-      return result_user;
-    };
-
-    update_basics = function (callback) {
-      var result, new_params = params;
-      if (username || email) {
-        params.data = {id: user_id, name: username, email: email};
-        result = manager._super(params);
-      }
-      callback(null, result);
-    };
-
-    update_enabled = function (callback) {
-      var result;
-      if (typeof(enabled) !== "undefined") {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "enabled"}));
-        params.data = {id: user_id, enabled: enabled};
-        result = manager._super(params);
-      }
-      callback(null, result);
-    };
-
-    update_project = function (callback) {
-      var result;
-      if (default_project) {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "tenant"}));
-        params.data = {id: user_id, tenantId: default_project};
-        result = manager._super(params);
-      }
-      callback(null, result);
-    };
-
-    update_password = function (callback) {
-      var result;
-      if (password) {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "password"}));
-        params.data = {id: user_id, password: password};
-        result = manager._super(params);
-      }
-      callback(null, result);
-    };
-
-    // Make jobs synchronous but process them asynchronously in parallel.
-    params.async = false;
-    async.parallel({
-      basics: update_basics,
-      enabled: update_enabled,
-      project: update_project,
-      password: update_password
-    }, assemble_data);
-    if (!params.async) {
-      wait_for_result = function () {
-        if (typeof(result_user) === "null") {
-          wait_for_result();
-        }
-      };
-      setTimeout(wait_for_result, 100);
-      return result_user;
-    }
+      success(result_user);
+    });
   },
 
   _updateEnabled: function (status, params, callback) {

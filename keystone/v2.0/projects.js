@@ -14,6 +14,7 @@ var ProjectManager = base.Manager.extend({
     params.data.enabled = true;
     return this.update(params, callback);
   },
+
   disable: function (params, callback) {
     params.data = params.data || {};
     params.data.enabled = false;
