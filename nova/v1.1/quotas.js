@@ -9,7 +9,7 @@ var QuotaManager = base.Manager.extend({
   singular: 'quota_set',
   plural: 'quota_sets',
 
-  usages: function (params) {
+  usages: function (params, callback) {
     var manager = this,
         usages = {},
         flavors = {},
@@ -22,28 +22,32 @@ var QuotaManager = base.Manager.extend({
 
     async.parallel([
       function (next) {
-        manager.client.servers.all({detail: true}, function (err, results) {
-          if (err) {
-            return next(err);
-          }
-          instances = results;
-          next();
+        manager.client.servers.all({
+          detail: true,
+          success: function (results) {
+            instances = results;
+            next(null);
+          },
+          error: next
         });
       },
       function (next) {
-        manager.client.flavors.all({detail: true}, function (err, results) {
-          if (err) {
-            return next(err);
-          }
-          results.forEach(function (flavor) {
-            flavors[flavor.id] = flavor;
-          });
-          next();
+        manager.client.flavors.all({
+          detail: true,
+          success: function (results) {
+            results.forEach(function (flavor) {
+              flavors[flavor.id] = flavor;
+            });
+            next(null);
+          },
+          error: next
         });
       }
     ], function (err) {
-      if (err && params.error) {
-        return params.error(err);
+      if (err) {
+        if (callback) callback(err);
+        if (params.error) params.error(err);
+        return;
       }
 
       instances.forEach(function (instance) {
@@ -54,6 +58,7 @@ var QuotaManager = base.Manager.extend({
         usages.ram += flavor.ram;
       });
 
+      if (callback) callback(null, usages);
       return params.success(usages);
     });
   }

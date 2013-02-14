@@ -36,41 +36,43 @@ The following shows off a variety of the features of the client:
 var Keystone = require("openclient").Keystone;
 
 var client = new Keystone({
-    url: <auth url>,
-    debug: true
-  }).authenticate({
+  url: <auth url>,
+  debug: true
+})
+
+client.authenticate({
     username: <username>,
     password: <password>,
     project: <project name>
+  // Callbacks can either be success/error handlers in the options object or
+  // a callback function as the last argument.
+  }, function (err, token) {
+  client.projects.all({
+    endpoint_type: "adminURL",  // Defaults to "publicURL".
+
+    // Callbacks receive the result of the call;
+    success: function (projects) {
+      var updated_project, project = projects[0];
+      client.projects.update({
+        endpoint_type: "adminURL",
+        id: project.id,
+        data: {
+          name: <new name>
+        },
+        success: function (updated_project) {
+          updated_project.name === <new name>;  // true
+        },
+        error: function (err) {
+          console.error(err);
+        }
+      });
+    },
+    error: function (err) {
+      console.error(err);
+    }
   });
-
-// Calls default to being asynchronous.
-// (synchronous calls are currently supported but not
-// recommended and may be removed in a future version)
-client.projects.all({
-  endpoint_type: "adminURL",  // Defaults to "publicURL".
-
-  // Callbacks receive the result of the call;
-  success: function (projects) {
-    var updated_project, project = projects[0];
-    client.projects.update({
-      endpoint_type: "adminURL",
-      id: project.id,
-      data: {
-        name: <new name>
-      },
-      success: function (updated_project) {
-        updated_project.name === <new name>;  // true
-      },
-      error: function (err) {
-        console.error(err);
-      }
-    });
-  },
-  error: function (err) {
-    console.error(err);
-  }
 });
+
 ```
 
 Plenty more examples are available in the integration tests for the clients

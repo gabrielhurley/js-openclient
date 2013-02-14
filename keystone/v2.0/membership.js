@@ -16,7 +16,7 @@ var ProjectMembershipManager = base.Manager.extend({
 
   // Pseudo-method that adds a user to a project with the given role and
   // returns the user data.
-  create: function (params) {
+  create: function (params, callback) {
     var client = this.client,
         endpoint_type = params.endpoint_type;
 
@@ -29,17 +29,26 @@ var ProjectMembershipManager = base.Manager.extend({
         client.users.get({
           id: params.data.user,
           endpoint_type: endpoint_type,
-          success: params.success,
-          error: params.error
+          success: function (result, xhr) {
+            if (callback) callback(results);
+            params.success(result, xhr)
+          },
+          error: function (err, xhr) {
+            if (callback) callback(err);
+            params.error(err, xhr);
+          }
         });
       },
-      error: params.error
+      error: function (err, xhr) {
+        if (callback) callback(err);
+        params.error(err, xhr);
+      }
     });
   },
 
   // Pseudo-method that removes a user from a project by removing any and all
   // roles that user may have on the project.
-  del: function (params) {
+  del: function (params, callback) {
     var user_roles_manager = this.client.user_roles,
         endpoint_type = params.endpoint_type;
 
@@ -66,7 +75,11 @@ var ProjectMembershipManager = base.Manager.extend({
           });
         });
         async.parallel(calls, function (err) {
-          if (err) return params.err(err);
+          if (err) {
+            if (callback) callback(err);
+            return params.err(err);
+          }
+          if (callback) callback(null);
           return params.success(null, {status: 200});
         });
       },

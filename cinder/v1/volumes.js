@@ -15,9 +15,9 @@ var VolumeManager = base.Manager.extend({
     return base_url;
   },
 
-  all: function (params) {
+  all: function (params, callback) {
     if (typeof params.detail === "undefined") params.detail = true;
-    return this._super(params);
+    return this._super(params, callback);
   },
 
   _action: function (params, action, info, callback) {
@@ -25,10 +25,10 @@ var VolumeManager = base.Manager.extend({
     if (params.data && params.data.id) delete params.data.id;
     params = this.prepare_params(params, url, "singular");
     params.data[action] = info || null;
-    return this.client.post(params, callback) || this;
+    return this.client.post(params, callback);
   },
 
-  attach: function (params) {
+  attach: function (params, callback) {
     // NOTE: THIS DOES NOT MIRROR PYTHON-CINDERCLIENT'S ATTACH METHOD.
     // Unlike python-cinderclient, this method *actually* attaches the
     // volume to the instance.
@@ -43,10 +43,10 @@ var VolumeManager = base.Manager.extend({
     if (params.data.id) delete params.data.id;
     delete params.data.instance_uuid;
 
-    return nova.servers.attach(params);
+    return nova.servers.attach(params, callback);
   },
 
-  detach: function (params) {
+  detach: function (params, callback) {
     // NOTE: THIS DOES NOT MIRROR PYTHON-CINDERCLIENT'S DETACH METHOD.
     // Unlike python-cinderclient, this method *actually* detaches the
     // volume from the instance.
@@ -83,14 +83,24 @@ var VolumeManager = base.Manager.extend({
             });
 
             async.parallel(calls, function (err) {
-              if (err) params.error(err);
-              else params.success(null, {status: 202});
+              if (err) {
+                if (callback) callback(err);
+                params.error(err);
+              }
+              else {
+                if (callback) callback(null);
+                params.success(null, {status: 202});
+              }
             });
           } else {
+            if (callback) callback(null);
             params.success(null, {status: 202});
           }
         },
-        error: params.error
+        error: function (err) {
+          if (callback) callback(err);
+          params.error(err);
+        }
       });
     } else {
       return nova.servers.detach({
@@ -100,7 +110,7 @@ var VolumeManager = base.Manager.extend({
         },
         success: params.success,
         error: params.error
-      });
+      }, callback);
     }
   }
 

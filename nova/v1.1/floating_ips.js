@@ -7,7 +7,7 @@ var FloatingIPManager = base.Manager.extend({
   namespace: "os-floating-ips",
   plural: "floating_ips",
 
-  available: function (params) {
+  available: function (params, callback) {
     params.parseResult = function (ips) {
       var available = [];
       ips.forEach(function (ip) {
@@ -15,10 +15,10 @@ var FloatingIPManager = base.Manager.extend({
       });
       return available;
     };
-    return this.all(params);
+    return this.all(params, callback);
   },
 
-  add_to_instance: function (params) {
+  add_to_instance: function (params, callback) {
     var client = this.client;
     params.id = params.id || params.data.id;
     if (params.data && params.data.id) delete params.data.id;
@@ -31,10 +31,10 @@ var FloatingIPManager = base.Manager.extend({
         return client.servers.add_floating_ip(params);
       },
       error: params.error
-    });
+    }, callback);
   },
 
-  remove_from_instance: function (params) {
+  remove_from_instance: function (params, callback) {
     var client = this.client;
     params.data = params.data || {};
     params.id = params.id || params.data.id;
@@ -47,7 +47,7 @@ var FloatingIPManager = base.Manager.extend({
         return client.servers.remove_floating_ip(params);
       },
       error: params.error
-    });
+    }, callback);
   }
 });
 

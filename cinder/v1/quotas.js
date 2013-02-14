@@ -8,7 +8,7 @@ var QuotaManager = base.Manager.extend({
   singular: 'quota_set',
   plural: 'quota_sets',
 
-  usages: function (params) {
+  usages: function (params, callback) {
     var usages = {},
         flavors = {},
         volumes = [];
@@ -24,9 +24,11 @@ var QuotaManager = base.Manager.extend({
           usages.gigabytes += volume.size;
           usages.disk += volume.size;
         });
+        if (callback) callback(null, usages);
         return params.success(usages);
       },
       error: function (err) {
+        if (callback) callback(err);
         return params.error(err);
       }
     });

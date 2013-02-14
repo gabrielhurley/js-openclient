@@ -8,7 +8,7 @@ var KeypairManager = base.Manager.extend({
   singular: "keypair",
 
   // Keypairs don't return their ID via the API, so we use the name instead.
-  all: function (params) {
+  all: function (params, callback) {
     var manager = this;
     params.parseResult = function (result) {
       var modified_results = [];
@@ -21,14 +21,14 @@ var KeypairManager = base.Manager.extend({
       });
       return modified_results;
     };
-    return this._super(params);
+    return this._super(params, callback);
   },
-  create: function (params) {
+  create: function (params, callback) {
     params.parseResult = function (result) {
       result.id = result.name;
       return result;
     };
-    return this._super(params);
+    return this._super(params, callback);
   },
 
   get: function (params) { throw new error.NotImplemented(); },

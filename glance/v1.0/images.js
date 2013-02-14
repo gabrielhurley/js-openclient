@@ -41,17 +41,17 @@ var ImageManager = base.Manager.extend({
 
   create: function (params) { throw new error.NotImplemented(); },
 
-  update: function (params) {
+  update: function (params, callback) {
     params.id = params.id || params.data.id;
     params.headers = _image_meta_to_headers(params.data);
     params.allow_headers = true;
     params.headers['Content-Type'] = 'application/octet-stream';
     params.headers['Content-Length'] = 0;
     delete params.data;
-    return this._super(params);
+    return this._super(params, callback);
   },
 
-  get: function (params) {
+  get: function (params, callback) {
     params.http_method = "head";
 
     params.parseHeaders = function (xhr) {
@@ -71,10 +71,10 @@ var ImageManager = base.Manager.extend({
 
       return result;
     };
-    return this._super(params);
+    return this._super(params, callback);
   },
 
-  bootable: function (params) {
+  bootable: function (params, callback) {
     var manager = this;
     params.parseResult = function (result) {
       var filtered = [],
@@ -87,7 +87,7 @@ var ImageManager = base.Manager.extend({
       });
       return filtered;
     };
-    return this.all(params);
+    return this.all(params, callback);
   }
 });
 

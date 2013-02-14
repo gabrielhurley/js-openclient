@@ -14,12 +14,12 @@ var ServerManager = base.Manager.extend({
     return base_url;
   },
 
-  all: function (params) {
+  all: function (params, callback) {
     if (typeof params.detail === "undefined") params.detail = true;
-    return this._super(params);
+    return this._super(params, callback);
   },
 
-  create: function (params) {
+  create: function (params, callback) {
     if (!params.data.name) {
       params.data.name = null;
     }
@@ -31,41 +31,41 @@ var ServerManager = base.Manager.extend({
         return {"name": sg};
       });
     }
-    return this._super(params);
+    return this._super(params, callback);
   },
 
-  security_groups: function (params) {
+  security_groups: function (params, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-security-groups");
     params.result_key = 'security_groups';
     params = this.prepare_params(params, url, "singular");
-    return this.client.get(params) || this;
+    return this.client.get(params, callback);
   },
 
-  attachments: function (params) {
+  attachments: function (params, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-volume_attachments");
     params.result_key = 'volumeAttachments';
     params = this.prepare_params(params, url, "singular");
-    return this.client.get(params) || this;
+    return this.client.get(params, callback);
   },
 
-  attach: function (params) {
+  attach: function (params, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-volume_attachments");
     params.result_key = 'volumeAttachment';
     params.data.device = params.data.device || null;
     params = this.prepare_params(params, url, "singular");
     params.data.volumeAttachment = params.data.server;
     delete params.data.server;
-    return this.client.post(params) || this;
+    return this.client.post(params, callback);
   },
 
-  detach: function (params) {
+  detach: function (params, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "os-volume_attachments", params.data.volumeId);
     delete params.data;
     params = this.prepare_params(params, url, "singular");
-    return this.client.del(params) || this;
+    return this.client.del(params, callback);
   },
 
-  volumes: function (params) {
+  volumes: function (params, callback) {
     var Cinder = require("../../cinder/v1/client");  // Avoid circular imports.
 
     var cinder = new Cinder(this.client),
@@ -84,10 +84,10 @@ var ServerManager = base.Manager.extend({
         new_params.data.ids.push(result.id);
       });
 
-      cinder.volumes.in_bulk(new_params);
+      cinder.volumes.in_bulk(new_params, callback);
     };
 
-    return this.attachments(params) || this;
+    return this.attachments(params);
   },
 
   _action: function (params, action, info, callback) {
@@ -95,36 +95,36 @@ var ServerManager = base.Manager.extend({
     if (params.data && params.data.id) delete params.data.id;
     params = this.prepare_params(params, url, "singular");
     params.data[action] = info || null;
-    return this.client.post(params, callback) || this;
+    return this.client.post(params, callback);
   },
 
-  reboot: function (params) { return this._action(params, "reboot", {'type': 'HARD'}); },
+  reboot: function (params, callback) { return this._action(params, "reboot", {'type': 'HARD'}, callback); },
 
-  migrate: function (params) { return this._action(params, "migrate"); },
+  migrate: function (params, callback) { return this._action(params, "migrate", null, callback); },
 
-  stop: function (params) { return this._action(params, "stop"); },
-  start: function (params) { return this._action(params, "start"); },
+  stop: function (params, callback) { return this._action(params, "stop", null, callback); },
+  start: function (params, callback) { return this._action(params, "start", null, callback); },
 
-  pause: function (params) { return this._action(params, "pause"); },
-  unpause: function (params) { return this._action(params, "unpause"); },
+  pause: function (params, callback) { return this._action(params, "pause", null, callback); },
+  unpause: function (params, callback) { return this._action(params, "unpause", null, callback); },
 
-  lock: function (params) { return this._action(params, "lock"); },
-  unlock: function (params) { return this._action(params, "unlock"); },
+  lock: function (params, callback) { return this._action(params, "lock", null, callback); },
+  unlock: function (params, callback) { return this._action(params, "unlock", null, callback); },
 
-  suspend: function (params) { return this._action(params, "suspend"); },
-  resume: function (params) { return this._action(params, "resume"); },
+  suspend: function (params, callback) { return this._action(params, "suspend", null, callback); },
+  resume: function (params, callback) { return this._action(params, "resume", null, callback); },
 
-  rescue: function (params) { return this._action(params, "rescue"); },
-  unrescue: function (params) { return this._action(params, "unrescue"); },
+  rescue: function (params, callback) { return this._action(params, "rescue", null, callback); },
+  unrescue: function (params, callback) { return this._action(params, "unrescue", null, callback); },
 
-  snapshot: function (params) {
+  snapshot: function (params, callback) {
     var extra = {name: params.data.name, metadata: {}};
     params.id = params.id || params.data.id;
     params.data = {};
-    return this._action(params, "createImage", extra);
+    return this._action(params, "createImage", extra, callback);
   },
 
-  getConsole: function (params) {
+  getConsole: function (params, callback) {
     var instance_id = params.id || params.data.id,
         type = params.data.type || "novnc",
         action = type === "spice-html5" ? "os-getSPICEConsole" : "os-getVNCConsole";
@@ -133,17 +133,19 @@ var ServerManager = base.Manager.extend({
       result.id = instance_id;
       return result;
     };
-    return this._action(params, action, {"type": type});
+    return this._action(params, action, {"type": type}, callback);
   },
 
-  getLog: function (params) { return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}); },
+  getLog: function (params, callback) {
+    return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}, callback);
+  },
 
-  add_floating_ip: function (params) {
+  add_floating_ip: function (params, callback) {
     var manager = this;
 
     function finish(address) {
       delete params.data;
-      return manager._action(params, 'addFloatingIp', {'address': address});
+      return manager._action(params, 'addFloatingIp', {'address': address}, callback);
     }
 
     params.id = params.id || params.data.id;
@@ -176,12 +178,12 @@ var ServerManager = base.Manager.extend({
     }
   },
 
-  remove_floating_ip: function (params) {
+  remove_floating_ip: function (params, callback) {
     var manager = this;
 
     function finish(address) {
       delete params.data;
-      return manager._action(params, 'removeFloatingIp', {'address': address});
+      return manager._action(params, 'removeFloatingIp', {'address': address}, callback);
     }
 
     params.id = params.id || params.data.id;

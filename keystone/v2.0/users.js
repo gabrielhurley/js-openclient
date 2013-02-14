@@ -7,7 +7,7 @@ var async = require("async"),
 
 var UserManager = base.Manager.extend({
   namespace: "users",
-  update: function (params) {
+  update: function (params, callback) {
     // Keystone splits user update functions into four pieces. :-/
     var manager = this,
         pattern = "{id}/OS-KSADM/{action}",
@@ -91,7 +91,10 @@ var UserManager = base.Manager.extend({
       project: update_project,
       password: update_password
     }, function (err, results) {
-      if (err) error(err);
+      if (err) {
+        if (callback) callback(err);
+        return error(err);
+      }
 
       var result_user = {id: params.id};
       if (results.basics) {
@@ -104,6 +107,7 @@ var UserManager = base.Manager.extend({
         result_user.enabled = results.enabled.extra.enabled;
       }
       // FIXME(gabriel): This should fill in the rest of the details.
+      if (callback) callback(result_user);
       success(result_user);
     });
   },
@@ -113,7 +117,7 @@ var UserManager = base.Manager.extend({
         url = urljoin(this.get_base_url(params), path);
     params.data = {id: params.id, enabled: status};
     params = this.prepare_params(params, url, "singular");
-    return this.client.put(params, callback) || this;
+    return this.client.put(params, callback);
   },
   enable: function (params, callback) { return this._updateEnabled(true, params, callback); },
   disable: function (params, callback) { return this._updateEnabled(false, params, callback); }

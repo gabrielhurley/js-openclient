@@ -66,7 +66,6 @@ var Client = Class.extend({
   request: function (params, callback) {
     var xhr = new XMLHttpRequest(),
         client = this,
-        async = true,
         token = this.scoped_token || this.unscoped_token,
         dataType,
         data,
@@ -74,15 +73,11 @@ var Client = Class.extend({
         headers,
         method;
 
-    if (typeof params.async === 'boolean') {
-      async = params.async;
-    }
-
     // This is mainly necessary due to Glance needing the Content-Length
     // header set on PUT requests, but xmlhttprequest only setting it for POST.
     if (params.allow_headers) xhr.setDisableHeaderCheck(true);
 
-    xhr.open(params.method, params.url, async);
+    xhr.open(params.method, params.url, true);
 
     method = params.method.toUpperCase();
 
@@ -124,7 +119,7 @@ var Client = Class.extend({
         // Log the response regardless of what it is.
         client.log("\nRES:", method, params.url,
                    "\nstatus:", status,
-                   async ? "\n" + xhr.getAllResponseHeaders() : "",
+                   "\n" + xhr.getAllResponseHeaders(),
                    "\nbody:", xhr.responseText);
 
         // Response handling.
@@ -169,11 +164,7 @@ var Client = Class.extend({
 
           err = new Err(status, message);
 
-          if (async) {
-            end(err);
-          } else {
-            throw err;
-          }
+          end(err);
         }
       }
     };
@@ -197,11 +188,6 @@ var Client = Class.extend({
     } else {
       this.log("\nREQ:", method, params.url, this.format_headers(headers));
       xhr.send();
-    }
-
-    // If this call is synchronous, return the result.
-    if (!async) {
-      return result;
     }
 
     // Otherwise return null so the manager class can return itself for chaining.
@@ -261,6 +247,9 @@ var Client = Class.extend({
           client.unscoped_token = result.token;
         }
       }
+
+      if (callback) callback(null, result);
+      if (params.success) params.success(client, xhr);
     }
 
     params = params || {};
@@ -278,13 +267,18 @@ var Client = Class.extend({
     if (params.project) {
       credentials.auth.tenantName = params.project;
     }
+
     this.post({
       url: urljoin(this.url, "/tokens"),
       data: credentials,
       result_key: "access",
       success: authenticated,
-      async: params.async
-    }, callback);
+      error: function (err, xhr) {
+        if (callback) callback(err);
+        if (params.error) params.error(err);
+      }
+    });
+
     return this;
   }
 });
@@ -383,7 +377,7 @@ var Manager = Class.extend({
   all: function (params, callback) {
     params.manager_method = "all";
     params = this.prepare_params(params, this.get_base_url(params), "plural");
-    return this.client[params.http_method || this.method_map.get](params, callback) || this;
+    return this.client[params.http_method || this.method_map.get](params, callback);
   },
 
   // Fetches a single object based on the parameters passed in.
@@ -393,7 +387,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[params.http_method || this.method_map.get](params, callback) || this;
+    return this.client[params.http_method || this.method_map.get](params, callback);
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
@@ -440,7 +434,7 @@ var Manager = Class.extend({
   create: function (params, callback) {
     params.manager_method = "create";
     params = this.prepare_params(params, this.get_base_url(params), "singular");
-    return this.client[params.http_method || this.method_map.create](params, callback) || this;
+    return this.client[params.http_method || this.method_map.create](params, callback);
   },
 
   // Updates an existing object.
@@ -450,7 +444,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[params.http_method || this.method_map.update](params, callback) || this;
+    return this.client[params.http_method || this.method_map.update](params, callback);
   },
 
   // DELETE OPERATIONS
@@ -462,7 +456,7 @@ var Manager = Class.extend({
     params = this.normalize_id(params);
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
-    return this.client[params.http_method || this.method_map.del](params, callback) || this;
+    return this.client[params.http_method || this.method_map.del](params, callback);
   }
 });
 
