@@ -129,8 +129,10 @@ var Client = Class.extend({
           if (xhr.responseText) {
             result = JSON.parse(xhr.responseText);
 
-            if (result && params.result_key) {
-              result = result[params.result_key];
+            if (result) {
+              if (params.result_key) {
+                result = result[params.result_key];
+              }
               if (params.parseResult) {
                 result = params.parseResult(result);
               }
