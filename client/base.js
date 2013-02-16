@@ -126,7 +126,9 @@ var Client = Class.extend({
         // Ignore informational codes for now (1xx).
         // Handle successes (2xx).
         if (status >= 200 && status < 300) {
-          if (xhr.responseText) {
+          if (params.raw_result) {
+            result = xhr.responseText;
+          } else if (xhr.responseText) {
             result = JSON.parse(xhr.responseText);
 
             if (result) {
