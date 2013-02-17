@@ -67,6 +67,7 @@ var Client = Class.extend({
     var xhr = new XMLHttpRequest(),
         client = this,
         token = this.scoped_token || this.unscoped_token,
+        url = params.url,
         dataType,
         data,
         result,
@@ -77,7 +78,15 @@ var Client = Class.extend({
     // header set on PUT requests, but xmlhttprequest only setting it for POST.
     if (params.allow_headers) xhr.setDisableHeaderCheck(true);
 
-    xhr.open(params.method, params.url, true);
+    if (params.query) {
+      var query_params = [];
+      Object.keys(params.query).forEach(function (key) {
+        query_params.push(key + "=" + params.query[key]);
+      });
+      url += "?" + query_params.join("&");
+    }
+
+    xhr.open(params.method, url, true);
 
     method = params.method.toUpperCase();
 
