@@ -172,6 +172,9 @@ var ObjectManager = base.Manager.extend({
   },
 
   all: function (params, callback) {
+    params.query = params.query || {};
+    if (!params.query.format) params.query.format = "json";
+
     params.container = params.data.container;
 
     params.parseResult = function (results) {

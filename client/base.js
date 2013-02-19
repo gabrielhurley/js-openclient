@@ -126,7 +126,7 @@ var Client = Class.extend({
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
         // Log the response regardless of what it is.
-        client.log("\nRES:", method, params.url,
+        client.log("\nRES:", method, url,
                    "\nstatus:", status,
                    "\n" + xhr.getAllResponseHeaders(),
                    "\nbody:", xhr.responseText);
@@ -194,7 +194,7 @@ var Client = Class.extend({
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
       // Data is guaranteed to be an object by this point.
       data = JSON.stringify(params.data);
-      this.log("\nREQ:", method, params.url,
+      this.log("\nREQ:", method, url,
                this.format_headers(headers),
                "\nbody:", this.redact(data));
       xhr.send(data);

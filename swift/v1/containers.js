@@ -73,6 +73,10 @@ var ContainerManager = base.Manager.extend({
   },
 
   all: function (params, callback) {
+
+    params.query = params.query || {};
+    if (!params.query.format) params.query.format = "json";
+
     params.parseResult = function (results) {
       results.forEach(function (result) {
         result.id = result.name;
