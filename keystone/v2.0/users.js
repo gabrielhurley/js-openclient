@@ -117,6 +117,12 @@ var UserManager = base.Manager.extend({
         url = urljoin(this.get_base_url(params), path);
     params.data = {id: params.id, enabled: status};
     params = this.prepare_params(params, url, "singular");
+    params.parseResult = function (result) {
+      if (result.extra.enabled) {
+        result.enabled = result.extra.enabled;
+      }
+      return result;
+    };
     return this.client.put(params, callback);
   },
   enable: function (params, callback) { return this._updateEnabled(true, params, callback); },

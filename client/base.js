@@ -53,8 +53,8 @@ var Client = Class.extend({
 
   // Fetches a URL for the current service type with the given endpoint type.
   url_for: function (endpoint_type, service_type) {
+    var search_service_type = service_type || this.service_type;
     for (var i = 0; i < this.service_catalog.length; i++) {
-      var search_service_type = service_type || this.service_type;
       if (this.service_catalog[i].type === search_service_type) {
         return this.service_catalog[i].endpoints[0][endpoint_type];
       }
