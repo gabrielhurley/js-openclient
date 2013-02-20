@@ -52,13 +52,18 @@ var Client = Class.extend({
   },
 
   // Fetches a URL for the current service type with the given endpoint type.
-  url_for: function (endpoint_type) {
+  url_for: function (endpoint_type, service_type) {
     for (var i = 0; i < this.service_catalog.length; i++) {
-      if (this.service_catalog[i].type === this.service_type) {
+      var search_service_type = service_type || this.service_type;
+      if (this.service_catalog[i].type === search_service_type) {
         return this.service_catalog[i].endpoints[0][endpoint_type];
       }
     }
-    return this.url;
+    if (service_type) {  // If we came up empty for a specific search, return null.
+      return null;
+    } else {  // Otherwise try returning a pre-set URL.
+      return this.url;
+    }
   },
 
   // Core method for making requests to API endpoints.
@@ -368,7 +373,9 @@ var Manager = Class.extend({
 
     // Ensure that we only wrap the data object if data is present and
     // contains actual values.
-    if (params.data && typeof params.data === "object" && Object.keys(params.data).length > 0) {
+    if (params.use_raw_data) {
+      params.data = params.data;
+    } else if (params.data && typeof params.data === "object" && Object.keys(params.data).length > 0) {
       params.data = this.prepare_data(params.data || {});
     } else {
       params.data = {};

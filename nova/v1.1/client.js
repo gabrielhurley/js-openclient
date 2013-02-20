@@ -1,9 +1,8 @@
 var base = require("../../client/base"),
     FlavorManager = require("./flavors"),
+    CertsManager = require("./certs"),
     ServerManager = require("./servers"),
-
     FloatingIPManager = require('./floating_ips'),
-
     ImageManager = require('./images'),
     QuotaManager = require('./quotas'),
     LimitManager = require('./limits'),
@@ -28,6 +27,7 @@ var Nova = base.Client.extend({
     this.keypairs = new KeypairManager(this);
     this.security_groups = new SecurityGroupManager(this);
     this.security_group_rules = new SecurityGroupRuleManager(this);
+    this.certs = new CertsManager(this);
   }
 });
 

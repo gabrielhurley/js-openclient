@@ -5,7 +5,8 @@ var async = require("async"),
     RoleManager = require("./roles"),
     UserManager = require("./users"),
     ProjectMembershipManager = require("./membership"),
-    UserRoleManager = require("./user_roles");
+    UserRoleManager = require("./user_roles"),
+    EC2Manager = require("./ec2");
 
 
 var Keystone = base.Client.extend({
@@ -19,6 +20,7 @@ var Keystone = base.Client.extend({
     this.users = new UserManager(this);
     this.user_roles = new UserRoleManager(this);
     this.membership = new ProjectMembershipManager(this);
+    this.ec2 = new EC2Manager(this);
   }
 });
 
