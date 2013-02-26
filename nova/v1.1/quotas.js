@@ -9,6 +9,29 @@ var QuotaManager = base.Manager.extend({
   singular: 'quota_set',
   plural: 'quota_sets',
 
+  // This list does not include volume quotas which are handled by Cinder.
+  _quota_names: ["instances", "cores", "ram", "floating_ips", "key_pairs",
+                 "security_groups", "security_group_rules", "metadata_items",
+                 "injected_files", "injected_file_content_bytes",
+                 "injected_file_path_bytes"],
+
+  update: function (params, callback) {
+    params.id = params.id || params.data.id;
+
+    // Treat blank values as "unlimited" and set them to -1.
+    this._quota_names.forEach(function (name) {
+      var val = params.data[name];
+      if (typeof val !== "undefined" && val !== 0 && !val) params.data[name] = -1;
+    });
+
+    params.parseResult = function (result) {
+      result.id = params.id;
+      return result;
+    };
+
+    this._super(params, callback);
+  },
+
   usages: function (params, callback) {
     var manager = this,
         usages = {},
