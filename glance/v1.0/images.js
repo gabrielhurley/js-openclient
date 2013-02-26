@@ -74,6 +74,15 @@ var ImageManager = base.Manager.extend({
     return this._super(params, callback);
   },
 
+  all: function (params, callback) {
+    params.query = params.query || {};
+    if (typeof params.query.all_tenants !== "undefined") {
+      if (params.query.all_tenants) params.query.is_public = "None";
+      delete params.query.all_tenants;
+    }
+    this._super(params, callback);
+  },
+
   bootable: function (params, callback) {
     var manager = this;
     params.parseResult = function (result) {

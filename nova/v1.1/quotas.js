@@ -43,7 +43,7 @@ var QuotaManager = base.Manager.extend({
     usages.vcpus = 0;
     usages.ram = 0;
 
-    async.parallel([
+    async.series([
       function (next) {
         manager.client.servers.all({
           detail: true,
@@ -55,7 +55,8 @@ var QuotaManager = base.Manager.extend({
         });
       },
       function (next) {
-        manager.client.flavors.all({
+        manager.client.flavors.in_use({
+          instances: instances,
           detail: true,
           success: function (results) {
             results.forEach(function (flavor) {
@@ -82,7 +83,7 @@ var QuotaManager = base.Manager.extend({
       });
 
       if (callback) callback(null, usages);
-      return params.success(usages);
+      if (params.success) params.success(usages);
     });
   }
 });
