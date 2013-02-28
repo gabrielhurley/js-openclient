@@ -42,6 +42,7 @@ var QuotaManager = base.Manager.extend({
     usages.cores = 0;
     usages.vcpus = 0;
     usages.ram = 0;
+    usages.instances = 0;
 
     async.series([
       function (next) {
@@ -73,6 +74,8 @@ var QuotaManager = base.Manager.extend({
         if (params.error) params.error(err);
         return;
       }
+
+      usages.instances = instances.length;
 
       instances.forEach(function (instance) {
         var flavor = flavors[instance.flavor.id];
