@@ -173,14 +173,16 @@ var Client = Class.extend({
               err;
 
           try {
-            api_error = JSON.parse(xhr.responseText).error;
+            api_error = JSON.parse(xhr.responseText);
+            if (api_error.hasOwnProperty('error')) api_error = api_error.error;
+            if (api_error.hasOwnProperty('badRequest')) api_error = api_error.badRequest;
             message = api_error.message;
           }
           catch (problem) {
-            message = xhr.responseText;
+            message = null;
           }
 
-          err = new Err(status, message);
+          err = new Err(status, message, api_error);
 
           end(err);
         }

@@ -34,9 +34,11 @@ defineErrorType('NotImplemented', function (message) {
 });
 
 
-defineErrorType('ClientError', function (status, api_error) {
+defineErrorType('ClientError', function (status, message, api_error) {
   this.status = status;
-  if (api_error && api_error.message) {
+  if (message) {
+    this.message = message;
+  }  else if (api_error && api_error.message) {
     this.message = api_error.message;
   } else {
     this.message = this.name + '(' + status + ')';
