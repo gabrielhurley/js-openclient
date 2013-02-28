@@ -29,57 +29,59 @@ var UserManager = base.Manager.extend({
     password = params.data.password;
 
     update_basics = function (done) {
-      var result, new_params = params;
       if (username || email) {
-        params.data = {id: user_id, name: username, email: email};
-        params.success = function (result) { done(null, result); };
-        params.error = function (err) { done(err); };
-        manager._super(params);
+        var new_params = {
+          data: {id: user_id, name: username, email: email},
+          success: function (result) { done(null, result); },
+          error: done,
+          endpoint_type: params.endpoint_type
+        };
+        manager._super(new_params);
       } else {
         done(null);
       }
     };
 
     update_enabled = function (done) {
-      var result;
       if (typeof(enabled) !== "undefined") {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "enabled"}));
-        params.data = {id: user_id, enabled: enabled};
-        params.success = function (result) { done(null, result); };
-        params.error = function (err) { done(err); };
-        manager._super(params);
+        var new_params = {
+          data: {id: user_id, enabled: enabled},
+          success: function (result) { done(null, result); },
+          error: done,
+          endpoint_type: params.endpoint_type
+        };
+        new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "enabled"}));
+        manager._super(new_params);
       } else {
         done(null);
       }
     };
 
     update_project = function (done) {
-      var result;
       if (default_project) {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "tenant"}));
-        params.data = {id: user_id, tenantId: default_project};
-        params.success = function (result) { done(null, result); };
-        params.error = function (err) { done(err); };
-        manager._super(params);
+        var new_params = {
+          data: {id: user_id, tenantId: default_project},
+          success: function (result) { done(null, result); },
+          error: done,
+          endpoint_type: params.endpoint_type
+        };
+        new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "tenant"}));
+        manager._super(new_params);
       } else {
         done(null);
       }
     };
 
     update_password = function (done) {
-      var result;
       if (password) {
-        params.url = urljoin(manager.get_base_url(params),
-                             interpolate(pattern,
-                                         {id: params.id, action: "password"}));
-        params.data = {id: user_id, password: password};
-        params.success = function (result) { done(null, result); };
-        params.error = function (err) { done(err); };
-        manager._super(params);
+        var new_params = {
+          data: {id: user_id, password: password},
+          success: function (result) { done(null, result); },
+          error: done,
+          endpoint_type: params.endpoint_type
+        };
+        new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "password"}));
+        manager._super(new_params);
       } else {
         done(null);
       }
