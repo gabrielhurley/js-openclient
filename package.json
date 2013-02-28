@@ -1,6 +1,6 @@
 {
   "name": "openclient",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "An opinionated client for RESTful APIs (particularly OpenStack's).",
   "homepage": "https://github.com/gabrielhurley/js-openclient",
   "keywords": ["client", "rest", "openstack"],

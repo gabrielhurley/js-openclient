@@ -4,9 +4,10 @@ var base = require("../../client/base"),
 
 function _image_meta_to_headers(data) {
   var headers = {},
-      non_meta_props = ['name', 'is_public', 'disk_format', 'container_format'];
+      non_meta_props = ['name', 'is_public', 'disk_format', 'container_format', 'protected'];
 
   data = data || {};
+  data.properties = data.properties || {};
 
   (Object.keys(data)).forEach(function (key) {
     if (key === "id") return;
@@ -39,7 +40,16 @@ var ImageManager = base.Manager.extend({
     return base_url;
   },
 
-  create: function (params) { throw new error.NotImplemented(); },
+  create: function (params, callback) { throw new error.NotImplemented(); },
+
+  del: function (params, callback) {
+    if (params.data) delete params.data;
+    params.headers = params.headers || {};
+    params.allow_headers = true;
+    params.headers['Content-Type'] = 'application/octet-stream';
+    params.headers['Content-Length'] = 0;
+    this._super(params, callback);
+  },
 
   update: function (params, callback) {
     params.id = params.id || params.data.id;
@@ -48,7 +58,7 @@ var ImageManager = base.Manager.extend({
     params.headers['Content-Type'] = 'application/octet-stream';
     params.headers['Content-Length'] = 0;
     delete params.data;
-    return this._super(params, callback);
+    this._super(params, callback);
   },
 
   get: function (params, callback) {
@@ -71,7 +81,7 @@ var ImageManager = base.Manager.extend({
 
       return result;
     };
-    return this._super(params, callback);
+    this._super(params, callback);
   },
 
   all: function (params, callback) {
@@ -90,13 +100,13 @@ var ImageManager = base.Manager.extend({
           non_bootable = ['ari', 'aki'];
 
       result.forEach(function (item) {
-        if (non_bootable.indexOf(item.container_format) === -1) {
-          filtered.push(item);
-        }
+        if (non_bootable.indexOf(item.container_format) !== -1) return;
+        if (item.status.toLowerCase() !== "active") return;
+        filtered.push(item);
       });
       return filtered;
     };
-    return this.all(params, callback);
+    this.all(params, callback);
   }
 });
 
