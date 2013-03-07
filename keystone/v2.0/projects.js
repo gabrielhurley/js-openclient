@@ -12,12 +12,24 @@ var ProjectManager = base.Manager.extend({
   enable: function (params, callback) {
     params.data = params.data || {};
     params.data.enabled = true;
+    params.parseResult = function (result) {
+      if (typeof result.extra.enabled !== "undefined") {
+        result.enabled = result.extra.enabled;
+      }
+      return result;
+    };
     return this.update(params, callback);
   },
 
   disable: function (params, callback) {
     params.data = params.data || {};
     params.data.enabled = false;
+    params.parseResult = function (result) {
+      if (typeof result.extra.enabled !== "undefined") {
+        result.enabled = result.extra.enabled;
+      }
+      return result;
+    };
     return this.update(params, callback);
   }
 

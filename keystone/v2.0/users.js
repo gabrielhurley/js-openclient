@@ -120,7 +120,7 @@ var UserManager = base.Manager.extend({
     params.data = {id: params.id, enabled: status};
     params = this.prepare_params(params, url, "singular");
     params.parseResult = function (result) {
-      if (result.extra.enabled) {
+      if (typeof result.extra.enabled !== "undefined") {
         result.enabled = result.extra.enabled;
       }
       return result;
