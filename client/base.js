@@ -16,6 +16,8 @@ var Client = Class.extend({
   init: function (options) {
     options = options || {};
     this.debug = options.debug || false;
+    this.log_level = options.log_level || (options.debug ? "debug" : "warning");
+    this._log_level = this.log_levels[options.log_level];  // Store the numeric version so we don't recalculate it every time.
     this.url = options.url;
     this.scoped_token = options.scoped_token || null;
     this.unscoped_token = options.unscoped_token || null;
@@ -24,11 +26,20 @@ var Client = Class.extend({
     this.user = options.user || null;
   },
 
+  log_levels: {
+    "critical": 100,
+    "error": 80,
+    "warn": 60,
+    "info": 40,
+    "debug": 20
+  },
+
   // Generic logging placeholder.
   // TODO(gabriel): Make this better.
-  log: function () {
-    if (this.debug) {
-      console.log(Array.prototype.slice.apply(arguments).join(" "));
+  log: function (level) {
+    if (typeof level !== "number") level = this.log_levels[level];
+    if (level >= this._log_level) {
+      console.log(Array.prototype.slice.apply(arguments, [1, arguments.length]).join(" "));
     }
   },
 
@@ -111,6 +122,12 @@ var Client = Class.extend({
       }
     }
 
+    function log_request(level, method, url, headers, data) {
+      var args = [level, "\nREQ:", method, url, client.format_headers(headers)];
+      if (data) args = args.concat(["\nbody:", client.redact(data)]);
+      client.log.apply(client, args);
+    }
+
     function end(err) {
       if (err && params.error) {
         params.error(err, xhr);
@@ -130,8 +147,14 @@ var Client = Class.extend({
     xhr.onreadystatechange = function () {
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
-        // Log the response regardless of what it is.
-        client.log("\nRES:", method, url,
+        // We may have missed logging the request that triggered the error
+        // if the log level was too low so we check and log here.
+        if (status >= 400 && client._log_level < client.log_levels.error) {
+          log_request("error", method, url, headers, data);
+        }
+
+        client.log(status >= 400 ? "error" : "info",
+                   "\nRES:", method, url,
                    "\nstatus:", status,
                    "\n" + xhr.getAllResponseHeaders(),
                    "\nbody:", xhr.responseText);
@@ -165,7 +188,7 @@ var Client = Class.extend({
         // Redirects are handled transparently by XMLHttpRequest.
         // Handle errors (4xx, 5xx)
         if (status >= 400) {
-          client.log(xhr.responseText);
+          client.log("error", "Error response text:", xhr.responseText);
 
           var api_error,
               message,
@@ -193,20 +216,18 @@ var Client = Class.extend({
 
     // Finally, send out the request.
     if (dataType === 'string' || dataType === 'number') {
-      this.log("\nREQ:", method, params.url,
-               this.format_headers(headers),
-               "\nbody:", params.data);
+      data = params.data;
+      log_request("info", method, url, headers, data);
       xhr.send(params.data);
 
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
       // Data is guaranteed to be an object by this point.
       data = JSON.stringify(params.data);
-      this.log("\nREQ:", method, url,
-               this.format_headers(headers),
-               "\nbody:", this.redact(data));
+      log_request("info", method, url, headers, data);
       xhr.send(data);
+
     } else {
-      this.log("\nREQ:", method, params.url, this.format_headers(headers));
+      log_request("info", method, url, headers);
       xhr.send();
     }
 
