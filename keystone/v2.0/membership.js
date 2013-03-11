@@ -14,6 +14,45 @@ var ProjectMembershipManager = base.Manager.extend({
 
   get: function (params) { throw new error.NotImplemented(); },
 
+  all: function (params, callback) {
+    var manager = this,
+        success = params.success,
+        error = params.error;
+
+    if (params.success) delete params.success;
+    if (params.error) delete params.error;
+
+    this._super(params, function (err, users) {
+      if (err) {
+        if (callback) callback(err);
+        if (error) error(err);
+        return;
+      }
+
+      // Add in the roles for each user.
+      async.forEach(users, function (user, next) {
+        var url = manager.urljoin(params.url, user.id, "roles");
+        manager.client.get({
+          url: url,
+          result_key: "roles",
+          error: next,
+          success: function (roles) {
+            user.roles = roles;
+            next();
+          }
+        });
+      }, function (err) {
+        if (err) {
+          if (callback) callback(err);
+          if (error) error(err);
+          return;
+        }
+        if (callback) callback(null, users);
+        if (success) success(users);
+      });
+    });
+  },
+
   // Pseudo-method that adds a user to a project with the given role and
   // returns the user data.
   create: function (params, callback) {
@@ -30,8 +69,8 @@ var ProjectMembershipManager = base.Manager.extend({
           id: params.data.user,
           endpoint_type: endpoint_type,
           success: function (result, xhr) {
-            if (callback) callback(results);
-            params.success(result, xhr)
+            if (callback) callback(result);
+            params.success(result, xhr);
           },
           error: function (err, xhr) {
             if (callback) callback(err);
