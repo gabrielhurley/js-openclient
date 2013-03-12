@@ -15,6 +15,16 @@ var QuotaManager = base.Manager.extend({
                  "injected_files", "injected_file_content_bytes",
                  "injected_file_path_bytes"],
 
+  get: function (params, callback) {
+    params.parseResult = function (result) {
+      // Set flavor attributes which aren't quota'd to -1 for "unlimited".
+      result.disk = -1;
+      result["OS-FLV-EXT-DATA:ephemeral"] = -1;
+      return result;
+    };
+    this._super(params, callback);
+  },
+
   update: function (params, callback) {
     params.id = params.id || params.data.id;
 
@@ -43,6 +53,7 @@ var QuotaManager = base.Manager.extend({
     usages.vcpus = 0;
     usages.ram = 0;
     usages.instances = 0;
+    usages["OS-FLV-EXT-DATA:ephemeral"] = 0;
 
     async.series([
       function (next) {
@@ -83,6 +94,8 @@ var QuotaManager = base.Manager.extend({
         usages.vcpus += flavor.vcpus;
         usages.cores += flavor.vcpus;
         usages.ram += flavor.ram;
+        usages.root_gb += flavor.disk;
+        usages["OS-FLV-EXT-DATA:ephemeral"] += flavor["OS-FLV-EXT-DATA:ephemeral"];
       });
 
       if (callback) callback(null, usages);
