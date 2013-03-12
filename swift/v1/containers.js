@@ -10,6 +10,10 @@ var ContainerManager = base.Manager.extend({
     this.method_map.create = "put";
   },
 
+  _safe_id: function (id) {
+    return encodeURIComponent(id);
+  },
+
   prepare_params: function (params, url, plural_or_singular) {
     params.result_key = false;
     return this._super(params, url, plural_or_singular);
@@ -23,7 +27,7 @@ var ContainerManager = base.Manager.extend({
     var manager = this,
         success = params.success;
 
-    params.id = params.name || params.data.name;
+    params.id = this._safe_id(params.name || params.data.name);
     delete params.data;
 
     params.success = function (result, xhr) {
@@ -64,7 +68,7 @@ var ContainerManager = base.Manager.extend({
       });
 
       result.id = params.id;
-      result.name = params.id;
+      result.name = decodeURIComponent(params.id);
 
       return result;
     };
@@ -73,13 +77,14 @@ var ContainerManager = base.Manager.extend({
   },
 
   all: function (params, callback) {
+    var manager = this;
 
     params.query = params.query || {};
     if (!params.query.format) params.query.format = "json";
 
     params.parseResult = function (results) {
       results.forEach(function (result) {
-        result.id = result.name;
+        result.id = manager._safe_id(result.name);
       });
       return results;
     };

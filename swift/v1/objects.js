@@ -13,6 +13,10 @@ var ObjectManager = base.Manager.extend({
     this.method_map.create = "put";
   },
 
+  _safe_id: function (id) {
+    return encodeURIComponent(id);
+  },
+
   // Method to handle binary file transfers since the XMLHttpRequest
   // library currently tries to transfer everything as utf8.
   _doBinaryRequest: function (method, url, token, data, callback) {
@@ -80,7 +84,7 @@ var ObjectManager = base.Manager.extend({
   },
 
   del: function (params, callback) {
-    params.id = params.id || params.data.id || params.data.name;
+    params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
     delete params.data;
     this._super(params, callback);
@@ -89,14 +93,14 @@ var ObjectManager = base.Manager.extend({
   get: function (params, callback) {
     if (!params.http_method) params.http_method = "head";
 
-    params.id = params.id || params.data.id || params.data.name;
+    params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
 
     params.parseHeaders = function (xhr) {
       var result = {};
 
       result.id = params.id;
-      result.name = params.id;
+      result.name = decodeURIComponent(params.id);
       result.hash = xhr.getResponseHeader('etag');
       result.last_modified = xhr.getResponseHeader('last-modified');
       result.content_type = xhr.getResponseHeader('content-type');
@@ -111,7 +115,7 @@ var ObjectManager = base.Manager.extend({
   },
 
   download: function (params, callback) {
-    params.id = params.id || params.data.id || params.data.name;
+    params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
     params.url = this.get_base_url(params) + "/" + params.id;
     delete params.data;
@@ -154,7 +158,7 @@ var ObjectManager = base.Manager.extend({
     params.http_method = "put";
     if (!params.headers) params.headers = {};
     params.headers['Content-Type'] = 'application/octet-stream';
-    params.id = params.id || params.data.id || params.data.name;
+    params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
     params.url = this.get_base_url(params) + "/" + params.id;
 
@@ -172,6 +176,7 @@ var ObjectManager = base.Manager.extend({
   },
 
   all: function (params, callback) {
+    var manager = this;
     params.query = params.query || {};
     if (!params.query.format) params.query.format = "json";
 
@@ -179,7 +184,7 @@ var ObjectManager = base.Manager.extend({
 
     params.parseResult = function (results) {
       results.forEach(function (result) {
-        result.id = result.name;
+        result.id = manager._safe_id(result.name);
       });
       return results;
     };
