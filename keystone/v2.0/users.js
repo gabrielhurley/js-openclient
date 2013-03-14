@@ -7,6 +7,17 @@ var async = require("async"),
 
 var UserManager = base.Manager.extend({
   namespace: "users",
+
+  create: function (params, callback) {
+    params.parseResult = function (user) {
+      // Clear the password, but don't simply delete it as some consumers
+      // ::cough backbone cough:: may store the password if it's not "changed".
+      if (user.password) user.password = "";
+      return user;
+    };
+    this._super(params, callback);
+  },
+
   update: function (params, callback) {
     // Keystone splits user update functions into four pieces. :-/
     var manager = this,
