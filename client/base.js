@@ -16,8 +16,8 @@ var Client = Class.extend({
   init: function (options) {
     options = options || {};
     this.debug = options.debug || false;
-    this.log_level = options.log_level || (options.debug ? "debug" : "warning");
-    this._log_level = this.log_levels[options.log_level];  // Store the numeric version so we don't recalculate it every time.
+    this.log_level = this.debug ? "debug" : (options.log_level || "warning");
+    this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
     this.url = options.url;
     this.scoped_token = options.scoped_token || null;
     this.unscoped_token = options.unscoped_token || null;

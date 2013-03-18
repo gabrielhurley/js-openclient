@@ -10,13 +10,17 @@ function _image_meta_to_headers(data) {
   data.properties = data.properties || {};
 
   (Object.keys(data)).forEach(function (key) {
-    if (key === "id") return;
+    if (key === "id" || key === "properties") return;
 
     if (non_meta_props.indexOf(key) !== -1) {
       headers['x-image-meta-' + key] = "" + data[key];
     } else {
-      headers['x-image-meta-property-' + key] = "" + data.properties[key];
+      headers['x-image-meta-property-' + key] = "" + data[key];
     }
+  });
+
+  (Object.keys(data.properties)).forEach(function (key) {
+    headers['x-image-meta-property-' + key] = "" + data.properties[key];
   });
 
   headers['x-glance-registry-purge-props'] = "false";
