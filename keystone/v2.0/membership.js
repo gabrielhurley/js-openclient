@@ -31,6 +31,8 @@ var ProjectMembershipManager = base.Manager.extend({
 
       // Add in the roles for each user.
       async.forEach(users, function (user, next) {
+        // NOTE: params.url exists here because we passed params into
+        // the _super call above.
         var url = manager.urljoin(params.url, user.id, "roles");
         manager.client.get({
           url: url,
@@ -70,7 +72,7 @@ var ProjectMembershipManager = base.Manager.extend({
           id: params.data.user,
           endpoint_type: endpoint_type,
           success: function (user, xhr) {
-            var url = manager.urljoin(params.url, user.id, "roles");
+            var url = manager.urljoin(manager.get_base_url(params), user.id, "roles");
             manager.client.get({
               url: url,
               result_key: "roles",
