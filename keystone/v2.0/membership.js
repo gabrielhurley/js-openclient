@@ -56,7 +56,8 @@ var ProjectMembershipManager = base.Manager.extend({
   // Pseudo-method that adds a user to a project with the given role and
   // returns the user data.
   create: function (params, callback) {
-    var client = this.client,
+    var manager = this,
+        client = this.client,
         endpoint_type = params.endpoint_type;
 
     client.user_roles.update({
@@ -68,19 +69,31 @@ var ProjectMembershipManager = base.Manager.extend({
         client.users.get({
           id: params.data.user,
           endpoint_type: endpoint_type,
-          success: function (result, xhr) {
-            if (callback) callback(result);
-            params.success(result, xhr);
+          success: function (user, xhr) {
+            var url = manager.urljoin(params.url, user.id, "roles");
+            manager.client.get({
+              url: url,
+              result_key: "roles",
+              error: function (err, xhr) {
+                if (callback) callback(err);
+                if (params.error) params.error(err, xhr);
+              },
+              success: function (roles) {
+                user.roles = roles;
+                if (callback) callback(user);
+                if (params.success) params.success(user, xhr);
+              }
+            });
           },
           error: function (err, xhr) {
             if (callback) callback(err);
-            params.error(err, xhr);
+            if (params.error) params.error(err, xhr);
           }
         });
       },
       error: function (err, xhr) {
         if (callback) callback(err);
-        params.error(err, xhr);
+        if (params.error) params.error(err, xhr);
       }
     });
   },

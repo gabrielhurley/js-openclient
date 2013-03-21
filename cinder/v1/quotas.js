@@ -29,8 +29,7 @@ var QuotaManager = base.Manager.extend({
 
   usages: function (params, callback) {
     var usages = {},
-        flavors = {},
-        volumes = [];
+        flavors = {};
 
     usages.id = this.client.tenant.id;
     usages.gigabytes = 0;
@@ -39,6 +38,7 @@ var QuotaManager = base.Manager.extend({
     this.client.volumes.all({
       detail: true,
       success: function (volumes) {
+        usages.volumes = volumes.length;
         volumes.forEach(function (volume) {
           usages.gigabytes += volume.size;
           usages.disk += volume.size;
