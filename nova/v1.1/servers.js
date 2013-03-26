@@ -137,6 +137,11 @@ var ServerManager = base.Manager.extend({
   },
 
   getLog: function (params, callback) {
+    params.id = params.id || params.data.id;
+    params.result_key = "output";
+    params.parseResult = function (result) {
+      return {id: params.id, data: result};
+    };
     return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}, callback);
   },
 

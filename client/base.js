@@ -18,6 +18,8 @@ var Client = Class.extend({
     this.debug = options.debug || false;
     this.log_level = this.debug ? "debug" : (options.log_level || "warning");
     this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
+    this.truncate_long_response = options.truncate_long_response || true; // Set default truncation to truncate...
+    this.truncate_response_at = options.truncate_response_at || -1; // but only based on specific truncation lengths in params.
     this.url = options.url;
     this.scoped_token = options.scoped_token || null;
     this.unscoped_token = options.unscoped_token || null;
@@ -153,11 +155,21 @@ var Client = Class.extend({
           log_request("error", method, url, headers, data);
         }
 
+        var response_text = xhr.responseText,
+            // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
+            truncate_at = client.truncate_response_at === -1 ? params.truncate_at || this.truncate_response_at : client.truncate_response_at;
+
+        if (client.truncate_long_response &&
+            truncate_at >= 0 &&
+            response_text.length >= client.truncate_response_at) {
+          response_text = response_text.substring(0, truncate_at) + "... (truncated)";
+        }
+
         client.log(status >= 400 ? "error" : "info",
                    "\nRES:", method, url,
                    "\nstatus:", status,
                    "\n" + xhr.getAllResponseHeaders(),
-                   "\nbody:", xhr.responseText);
+                   "\nbody:", response_text);
 
         // Response handling.
         // Ignore informational codes for now (1xx).
