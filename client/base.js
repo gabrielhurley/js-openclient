@@ -12,7 +12,14 @@ var Client = Class.extend({
   // Base client version
   VERSION: "1.0",
   redacted_request: ['password'],
-  redacted_response: ['private_key', 'private_key": null, "data'],
+  redacted_response: [
+    'private_key',
+    // TODO: This is a mega hack to redact the private key in certain situation
+    //       problem is that properties are ordered non-deterministically so "data"
+    //       could come before "private_key" we need a better way to do this. But it
+    //       works for now.
+    'private_key": null, "data'
+  ],
 
   init: function (options) {
     options = options || {};
