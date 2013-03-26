@@ -11,7 +11,8 @@ var Client = Class.extend({
 
   // Base client version
   VERSION: "1.0",
-  redacted: ['password'],
+  redacted_request: ['password'],
+  redacted_response: ['private_key', 'private_key": null, "data'],
 
   init: function (options) {
     options = options || {};
@@ -45,9 +46,9 @@ var Client = Class.extend({
     }
   },
 
-  redact: function (json_string) {
-    for (var i = 0; i < this.redacted.length; i++) {
-      var re = new RegExp('("' + this.redacted[i] + '":\\s?)"(([^\\"]|\\\\|\\")*)"', "g");
+  redact: function (json_string, redacted) {
+    for (var i = 0; i < redacted.length; i++) {
+      var re = new RegExp('("' + redacted[i] + '":\\s?)"(([^\\"]|\\\\|\\")*)"', "g");
       json_string = json_string.replace(re, '$1"*****"');
     }
     return json_string;
@@ -126,7 +127,13 @@ var Client = Class.extend({
 
     function log_request(level, method, url, headers, data) {
       var args = [level, "\nREQ:", method, url, client.format_headers(headers)];
-      if (data) args = args.concat(["\nbody:", client.redact(data)]);
+      if (data) args = args.concat(["\nbody:", client.redact(data, client.redacted_request)]);
+      client.log.apply(client, args);
+    }
+
+    function log_response(level, method, url, status, headers, data) {
+      var args = [level, "\nRES:", method, url, "\nstatus:", status, "\n", headers];
+      if (data) args = args.concat(["\nbody:", client.redact(data, client.redacted_response)]);
       client.log.apply(client, args);
     }
 
@@ -159,17 +166,18 @@ var Client = Class.extend({
             // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
             truncate_at = client.truncate_response_at === -1 ? params.truncate_at || this.truncate_response_at : client.truncate_response_at;
 
-        if (client.truncate_long_response &&
-            truncate_at >= 0 &&
-            response_text.length >= client.truncate_response_at) {
+        if (
+          client.truncate_long_response &&
+          truncate_at >= 0 &&
+          response_text.length >= client.truncate_response_at
+        ) {
           response_text = response_text.substring(0, truncate_at) + "... (truncated)";
         }
 
-        client.log(status >= 400 ? "error" : "info",
-                   "\nRES:", method, url,
-                   "\nstatus:", status,
-                   "\n" + xhr.getAllResponseHeaders(),
-                   "\nbody:", response_text);
+
+        log_response(status >= 400 ? "error" : "info",
+            method, url, status, xhr.getAllResponseHeaders(), response_text);
+
 
         // Response handling.
         // Ignore informational codes for now (1xx).
@@ -235,7 +243,9 @@ var Client = Class.extend({
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
       // Data is guaranteed to be an object by this point.
       data = JSON.stringify(params.data);
+
       log_request("info", method, url, headers, data);
+
       xhr.send(data);
 
     } else {
