@@ -225,7 +225,10 @@ var Client = Class.extend({
           try {
             api_error = JSON.parse(xhr.responseText);
             if (api_error.hasOwnProperty('error')) api_error = api_error.error;
+            // NOTE: The following are for stupid Cinder errors.
             if (api_error.hasOwnProperty('badRequest')) api_error = api_error.badRequest;
+            if (api_error.hasOwnProperty('overLimit')) api_error = api_error.overLimit;
+            if (api_error.hasOwnProperty('forbidden')) api_error = api_error.forbidden;
             message = api_error.message;
           }
           catch (problem) {
