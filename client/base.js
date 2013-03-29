@@ -145,6 +145,14 @@ var Client = Class.extend({
     }
 
     function end(err) {
+      if (!err && params.defer) {
+        return params.defer(result, function (e, r) {
+          params.defer = null;
+          result = r || result;
+          end(e);
+        });
+      }
+
       if (err && params.error) {
         params.error(err, xhr);
       }
