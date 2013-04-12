@@ -179,7 +179,7 @@ var Client = Class.extend({
 
         var response_text = xhr.responseText,
             // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
-            truncate_at = client.truncate_response_at === -1 ? params.truncate_at || this.truncate_response_at : client.truncate_response_at;
+            truncate_at = client.truncate_response_at === -1 ? (params.truncate_at || client.truncate_response_at) : client.truncate_response_at;
 
         if (
           client.truncate_long_response &&
