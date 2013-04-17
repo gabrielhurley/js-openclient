@@ -31,6 +31,10 @@ var ServerManager = base.Manager.extend({
         return {"name": sg};
       });
     }
+    // Base64 encode user data if present
+    if (params.data.user_data) {
+      params.data.user_data = new Buffer(params.data.user_data).toString('base64');
+    }
     return this._super(params, callback);
   },
 
