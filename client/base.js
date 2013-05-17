@@ -1,4 +1,4 @@
-var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest,
+var XMLHttpRequest = require("./io").XMLHttpRequest,
     async = require("async"),
     Class = require("./inheritance").Class,
     crypto = require('crypto'),
@@ -23,6 +23,7 @@ var Client = Class.extend({
 
   init: function (options) {
     options = options || {};
+    this.user_agent = options.user_agent || "js-openclient";
     this.debug = options.debug || false;
     this.log_level = this.debug ? "debug" : (options.log_level || "warning");
     this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
@@ -34,6 +35,9 @@ var Client = Class.extend({
     this.service_catalog = options.service_catalog || [];
     this.tenant = options.project || null;
     this.user = options.user || null;
+    // Allow URL rewrite hacks to bypass proxy issues.
+    // The argument should be an array in the form of [<match>, <replacement>]
+    this.url_rewrite = options.url_rewrite || false;
   },
 
   log_levels: {
@@ -102,7 +106,7 @@ var Client = Class.extend({
 
     // This is mainly necessary due to Glance needing the Content-Length
     // header set on PUT requests, but xmlhttprequest only setting it for POST.
-    if (params.allow_headers) xhr.setDisableHeaderCheck(true);
+    if (params.allow_headers && typeof xhr.setDisableHeaderCheck === "function") xhr.setDisableHeaderCheck(true);
 
     if (params.query) {
       var query_params = [];
@@ -112,6 +116,10 @@ var Client = Class.extend({
       url += "?" + query_params.join("&");
     }
 
+    if (this.url_rewrite) {
+      url = url.replace(this.url_rewrite[0], this.url_rewrite[1]);
+    }
+
     xhr.open(params.method, url, true);
 
     method = params.method.toUpperCase();
@@ -119,6 +127,8 @@ var Client = Class.extend({
     headers = params.headers || {};
     if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
     headers.Accept = "application/json";
+
+    headers['X-Requested-With'] = this.user_agent;
 
     // Set our auth token if we have one.
     if (token) {
@@ -263,7 +273,6 @@ var Client = Class.extend({
       data = JSON.stringify(params.data);
 
       log_request("info", method, url, headers, data);
-
       xhr.send(data);
 
     } else {
