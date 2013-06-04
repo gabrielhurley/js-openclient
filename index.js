@@ -12,5 +12,6 @@ module.exports = {
   Glance: require('./glance/v1.0/client'),
   Keystone: require("./keystone/v2.0/client"),
   Nova: require("./nova/v1.1/client"),
-  Swift: require("./swift/v1/client")
+  Swift: require("./swift/v1/client"),
+  Heat: require("./heat/v1/client")
 };
