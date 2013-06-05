@@ -211,7 +211,11 @@ var Client = Class.extend({
           if (params.raw_result) {
             result = xhr.responseText;
           } else if (xhr.responseText) {
-            result = JSON.parse(xhr.responseText);
+            try {
+              result = JSON.parse(xhr.responseText);
+            } catch (e) {
+              console.error("Invalid JSON response");
+            }
 
             if (result) {
               if (params.result_key) {
