@@ -28,8 +28,8 @@ if (typeof XMLHttpRequest !== "undefined") {
      * Private variables
      */
     var self = this;
-    var http = require('http');
-    var https = require('https');
+    var http = require('./follow-redirects').http;
+    var https = require('./follow-redirects').https;
 
     // Holds http.js objects
     var client;
