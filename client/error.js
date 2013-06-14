@@ -2,10 +2,10 @@ var inherits = require('util').inherits;
 
 
 function defineErrorType(name, init) {
-  var constructor = eval('(function ' + name + '(message){' +
-    'if (init) init.apply(this, arguments);' +
-    'Error.call(this, this.message || message);' +
-  '})');
+  var constructor = function _error(message) {
+    if (init) init.apply(this, arguments);
+    Error.call(this, this.message || message);
+  };
 
   inherits(constructor, Error);
 

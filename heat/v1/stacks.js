@@ -59,7 +59,7 @@ var StacksManager = base.Manager.extend({
 
       var detailed = [];
 
-      async.each(results, function (stack, done) {
+      async.forEach(results, function (stack, done) {
         manager.get({url: stack.links[0].href}, function (err, result) {
           if (err) {
             if (error) error(err);
