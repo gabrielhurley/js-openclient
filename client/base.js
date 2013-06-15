@@ -237,8 +237,6 @@ var Client = Class.extend({
         // Redirects are handled transparently by XMLHttpRequest.
         // Handle errors (4xx, 5xx)
         if (status >= 400) {
-          client.log("error", "Error response text:", xhr.responseText);
-
           var api_error,
               message,
               Err = error.get_error(status),
@@ -254,7 +252,7 @@ var Client = Class.extend({
             message = api_error.message;
           }
           catch (problem) {
-            message = null;
+            message = xhr.responseText;
           }
 
           err = new Err(status, message, api_error);
