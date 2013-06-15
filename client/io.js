@@ -43,6 +43,10 @@ if (typeof XMLHttpRequest !== "undefined") {
     // Not part of XHR specs.
     var disableHeaderCheck = false;
 
+    // Allow using an insecure or self-signed certificate.
+    // Not part of XHR specs.
+    var allowInsecureCert = false;
+
     // Set some default headers
     var defaultHeaders = {
       "User-Agent": "js-openclient",
@@ -184,7 +188,17 @@ if (typeof XMLHttpRequest !== "undefined") {
      */
     this.setDisableHeaderCheck = function (state) {
       disableHeaderCheck = state;
-    }
+    };
+
+    /**
+     * Disables or enables self-signed certs. Disabled by default.
+     * This does not conform to the W3C spec.
+     *
+     * @param boolean state Enable or disable header checking.
+     */
+    this.setAllowInsecureCert = function (state) {
+      allowInsecureCert = state;
+    };
 
     /**
      * Sets a header for the request.
@@ -342,6 +356,8 @@ if (typeof XMLHttpRequest !== "undefined") {
         headers: headers,
         agent: false
       };
+
+      if (allowInsecureCert && ssl) options.rejectUnauthorized = false;
 
       // Reset error flag
       errorFlag = false;

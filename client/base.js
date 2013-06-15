@@ -108,6 +108,9 @@ var Client = Class.extend({
     // header set on PUT requests, but xmlhttprequest only setting it for POST.
     if (params.allow_headers && typeof xhr.setDisableHeaderCheck === "function") xhr.setDisableHeaderCheck(true);
 
+    // When run in Node we can optionally allow using insecure/self-signed certs.
+    if (params.allow_insecure_cert && typeof xhr.setAllowInsecureCert === "function") xhr.setAllowInsecureCert(true);
+
     if (params.query) {
       var query_params = [];
       Object.keys(params.query).forEach(function (key) {
