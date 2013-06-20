@@ -10,6 +10,7 @@ var AZManager = require("./availability_zones"),
     QuotaManager = require('./quotas'),
     SecurityGroupManager = require('./security_groups'),
     SecurityGroupRuleManager = require('./security_group_rules'),
+    SecurityGroupDefaultRuleManager = require('./security_group_default_rules'),
     ServerManager = require("./servers");
 
 
@@ -30,6 +31,7 @@ var Nova = base.Client.extend({
     this.quotas = new QuotaManager(this);
     this.security_groups = new SecurityGroupManager(this);
     this.security_group_rules = new SecurityGroupRuleManager(this);
+    this.security_group_default_rules = new SecurityGroupDefaultRuleManager(this);
     this.servers = new ServerManager(this);
   }
 });
