@@ -33,6 +33,11 @@ defineErrorType('NotImplemented', function (message) {
   }
 });
 
+defineErrorType('Aborted', function () {
+  this.status = 0;
+  this.message = 'Request aborted';
+});
+
 
 defineErrorType('ClientError', function (status, message, api_error) {
   this.status = status;
@@ -47,6 +52,7 @@ defineErrorType('ClientError', function (status, message, api_error) {
 
 
 var code_map = {
+  0: exports.Aborted,
   404: exports.NotFound,
   409: exports.Conflict,
   503: exports.NotImplemented

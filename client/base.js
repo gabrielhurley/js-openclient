@@ -165,7 +165,6 @@ var Client = Class.extend({
           end(e);
         });
       }
-
       if (err && params.error) {
         params.error(err, xhr);
       }
@@ -186,7 +185,7 @@ var Client = Class.extend({
       if (xhr.readyState === 4) {
         // We may have missed logging the request that triggered the error
         // if the log level was too low so we check and log here.
-        if (status >= 400 && client._log_level < client.log_levels.error) {
+        if ((status === 0 || status >= 400) && client._log_level < client.log_levels.error) {
           log_request("error", method, url, headers, data);
         }
 
@@ -202,8 +201,12 @@ var Client = Class.extend({
           response_text = response_text.substring(0, truncate_at) + "... (truncated)";
         }
 
+        if (status === 0) {
+          response_text = "<REQUEST ABORTED>";
+        }
 
-        log_response(status >= 400 ? "error" : "info",
+
+        log_response((status === 0 || status >= 400) ? "error" : "info",
             method, url, status, xhr.getAllResponseHeaders(), response_text);
 
 
@@ -239,7 +242,7 @@ var Client = Class.extend({
 
         // Redirects are handled transparently by XMLHttpRequest.
         // Handle errors (4xx, 5xx)
-        if (status >= 400) {
+        if (status === 0 || status >= 400) {
           var api_error,
               message,
               Err = error.get_error(status),
