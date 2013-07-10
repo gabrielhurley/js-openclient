@@ -129,7 +129,15 @@ var Client = Class.extend({
     method = params.method.toUpperCase();
 
     headers = params.headers || {};
-    if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
+
+    if (!headers["Content-Type"]) {
+      if (params.use_http_form_data) {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      } else {
+        headers["Content-Type"] = "application/json";
+      }
+    }
+
     headers.Accept = "application/json";
 
     headers['X-Requested-With'] = this.user_agent;
