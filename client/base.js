@@ -1,4 +1,5 @@
 var XMLHttpRequest = require("./io").XMLHttpRequest,
+    URL = require('url'),
     async = require("async"),
     Class = require("./inheritance").Class,
     crypto = require('crypto'),
@@ -278,7 +279,11 @@ var Client = Class.extend({
 
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
       // Data is guaranteed to be an object by this point.
-      data = JSON.stringify(params.data);
+      if (params.use_http_form_data) {
+        data = URL.format({query: params.data}).substr(1);
+      } else {
+        data = JSON.stringify(params.data);
+      }
 
       log_request("info", method, url, headers, data);
       xhr.send(data);
