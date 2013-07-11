@@ -54,14 +54,12 @@ var ContainerManager = base.Manager.extend({
 
     params.id = params.id || params.data.id;
 
-    params.parseHeaders = function (xhr) {
-      var result = {},
-          lines = xhr.getAllResponseHeaders().split(/\r\n|\r|\n/);
+    params.parseHeaders = function (headers) {
+      var result = {};
 
-      lines.forEach(function (line) {
-        var matches = line.match(/x-container-(.*)?: (.*)/);
-        if (matches) {
-          result[matches[1]] = matches[2];
+      Object.keys(headers).forEach(function (key) {
+        if (key.indexOf("x-container-") === 0) {
+          result[key.replace("x-container-", "")] = headers[key];
         }
         if (result['object-count']) result.count = parseInt(result['object-count'], 10);
         if (result['bytes-used']) result.bytes = parseInt(result['bytes-used'], 10);

@@ -4,7 +4,6 @@ var base = require("../../client/base"),
     error = require("../../client/error");
 
 
-
 var ObjectManager = base.Manager.extend({
   namespace: "objects",
 
@@ -17,7 +16,7 @@ var ObjectManager = base.Manager.extend({
     return encodeURIComponent(id);
   },
 
-  // Method to handle binary file transfers since the XMLHttpRequest
+    // Method to handle binary file transfers since the XMLHttpRequest
   // library currently tries to transfer everything as utf8.
   _doBinaryRequest: function (method, url, token, data, callback) {
     var client = this.client;
@@ -96,15 +95,15 @@ var ObjectManager = base.Manager.extend({
     params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
 
-    params.parseHeaders = function (xhr) {
+    params.parseHeaders = function (headers) {
       var result = {};
 
       result.id = params.id;
       result.name = decodeURIComponent(params.id);
-      result.hash = xhr.getResponseHeader('etag');
-      result.last_modified = xhr.getResponseHeader('last-modified');
-      result.content_type = xhr.getResponseHeader('content-type');
-      result.bytes = xhr.getResponseHeader('content-length');
+      result.hash = headers.etag;
+      result.last_modified = headers['last-modified'];
+      result.content_type = headers['content-type'];
+      result.bytes = headers['content-length'];
 
       return result;
     };
@@ -131,31 +130,11 @@ var ObjectManager = base.Manager.extend({
   },
 
   create: function (params, callback) {
-    // NOTE: The params.data.file data is expected to be passed in base64 encoded.
-
     var manager = this,
         success = params.success,
-        container = params.data.container,
-        data = params.data.file;
+        container = params.data.container;
 
-    params.success = function (result, xhr) {
-      if (!result) {
-        manager.get({
-          id: params.id,
-          data: {
-            container: container
-          },
-          success: success,
-          error: params.error
-        }, callback);
-      }
-      else {
-        if (callback) callback(null, result);
-        success(result, xhr);
-      }
-    };
-
-    params.http_method = "put";
+    params.method = "PUT";
     if (!params.headers) params.headers = {};
     params.headers['Content-Type'] = 'application/octet-stream';
     params.id = params.id || params.data.id || this._safe_id(params.data.name);
@@ -164,15 +143,26 @@ var ObjectManager = base.Manager.extend({
 
     delete params.data;
 
-    this._doBinaryRequest("PUT", params.url, this.client.scoped_token.id, new Buffer(data, 'base64'), function (err, result) {
+    var uploader = this._openBinaryStream(params, params.headers, this.client.scoped_token.id, function (err, result) {
       if (err) {
         if (callback) callback(err);
         if (params.error) params.error(err);
       } else {
-        if (callback) callback(null, result);
-        if (params.success) params.success(result, {status: 200});
+        if (callback) callback(null, result, {status: 100});
+        if (params.success) params.success(result, {status: 100});
       }
     });
+
+    uploader.success = function (response_data, success_callback) {
+      manager.get({
+        id: params.id,
+        data: {
+          container: container
+        }
+      }, success_callback);
+    };
+
+    return uploader;
   },
 
   all: function (params, callback) {

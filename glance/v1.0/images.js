@@ -38,13 +38,55 @@ var ImageManager = base.Manager.extend({
 
   get_base_url: function (params) {
     var base_url = this._super(params);
-    if (!params.id) {  // If this is a "list" call...
+    if (!params.id && params.manager_method !== 'create') {  // If this is a "list" call...
       base_url = this.urljoin(base_url, 'detail');  // Always fetch the details.
     }
     return base_url;
   },
 
-  create: function (params, callback) { throw new error.NotImplemented(); },
+  create: function (params, callback) {
+    var manager = this,
+        success = params.success;
+
+    params.data = params.data || {};
+
+    // Glance does not really do anything with container_format at the
+    // moment. It requires it is set to the same disk_format for the three
+    // Amazon image types, otherwise it just treats them as 'bare.' As such
+    // we will just set that to be that here instead of bothering the user
+    // with asking them for information we can already determine.
+    if (['ami', 'aki', 'ari'].indexOf(params.data.disk_format) >= 0) {
+      params.data.container_format = params.data.disk_format;
+    } else {
+      params.data.container_format = 'bare';
+    }
+
+    params.method = "POST";
+    params.manager_method = 'create';
+    params.id = params.id || params.data.id;
+    params.headers = _image_meta_to_headers(params.data);
+    params.allow_headers = true;
+    params.headers['Content-Type'] = 'application/octet-stream';
+    params.url = this.get_base_url(params);
+    params.result_key = this.singular;
+    delete params.data;
+
+    var uploader = this._openBinaryStream(params, params.headers, this.client.scoped_token.id, function (err, result) {
+      if (err) {
+        if (callback) callback(err);
+        if (params.error) params.error(err);
+      } else {
+        if (callback) callback(null, result, {status: 100});
+        if (params.success) params.success(result, {status: 100});
+      }
+    });
+
+    uploader.success = function (result, success_callback) {
+      success_callback(null, result, {status: 200});
+    };
+
+    return uploader;
+  },
 
   del: function (params, callback) {
     if (params.data) delete params.data;
@@ -68,17 +110,16 @@ var ImageManager = base.Manager.extend({
   get: function (params, callback) {
     params.http_method = "head";
 
-    params.parseHeaders = function (xhr) {
+    params.parseHeaders = function (headers) {
       var result = {properties: {}},
-          lines = xhr.getAllResponseHeaders().split(/\r\n|\r|\n/);
+          lines = headers;
 
-      lines.forEach(function (line) {
-        var matches = line.match(/x-image-meta-(.*)?: (.*)/);
-        if (matches) {
-          if (matches[1].indexOf('property-') === 0) {
-            result.properties[matches[1].substring(9)] = matches[2];
+      Object.keys(headers).forEach(function (key) {
+        if (key.indexOf("x-image-meta-") === 0) {
+          if (key.indexOf("x-image-meta-property-") === 0) {
+            result.properties[key.replace("x-image-meta-property-", "")] = headers[key];
           } else {
-            result[matches[1]] = matches[2];
+            result[key.replace("x-image-meta-", "")] = headers[key];
           }
         }
       });

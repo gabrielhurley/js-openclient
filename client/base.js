@@ -1,11 +1,15 @@
-var XMLHttpRequest = require("./io").XMLHttpRequest,
-    URL = require('url'),
-    async = require("async"),
-    Class = require("./inheritance").Class,
-    crypto = require('crypto'),
+var crypto = require('crypto'),
+    http = require('http'),
+    URL = require('url');
+
+var async = require("async");
+
+var Class = require("./inheritance").Class,
     error = require("./error"),
+    is_ans1_token = require("./utils").is_ans1_token,
+    StreamingUpload = require("./streaming").StreamingUpload,
     urljoin = require("./utils").urljoin,
-    is_ans1_token = require("./utils").is_ans1_token;
+    XMLHttpRequest = require("./io").XMLHttpRequest;
 
 
 var Client = Class.extend({
@@ -92,6 +96,106 @@ var Client = Class.extend({
     }
   },
 
+  log_request: function (level, method, url, headers, data) {
+    var args = [level, "\nREQ:", method, url, this.format_headers(headers)];
+    if (data) args = args.concat(["\nbody:", this.redact(data, this.redacted_request)]);
+    this.log.apply(this, args);
+  },
+
+  log_response: function (level, method, url, status, headers, data) {
+    var args = [level, "\nRES:", method, url, "\nstatus:", status, "\n", headers];
+    if (data) args = args.concat(["\nbody:", this.redact(data, this.redacted_response)]);
+    this.log.apply(this, args);
+  },
+
+  process_response: function (method, url, data, status, response_text, headers, params, callback) {
+    var client = this;
+
+    // We may have missed logging the request that triggered the error
+    // if the log level was too low so we check and log here.
+    if ((status === 0 || status >= 400) && client._log_level < client.log_levels.error) {
+      client.log_request("error", method, url, headers, data);
+    }
+
+    // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
+    var truncate_at = client.truncate_response_at === -1 ? (params.truncate_at || client.truncate_response_at) : client.truncate_response_at;
+
+    if (
+      client.truncate_long_response &&
+      truncate_at >= 0 &&
+      response_text.length >= client.truncate_response_at
+    ) {
+      response_text = response_text.substring(0, truncate_at) + "... (truncated)";
+    }
+
+    if (status === 0) {
+      response_text = "<REQUEST ABORTED>";
+    }
+
+
+    client.log_response((status === 0 || status >= 400) ? "error" : "info",
+                        method, url, status, headers, response_text);
+
+
+    // Response handling.
+    // Ignore informational codes for now (1xx).
+    // Handle successes (2xx).
+    if (status >= 200 && status < 300) {
+      var result;
+
+      if (params.raw_result) {
+        result = response_text;
+      } else if (response_text) {
+        try {
+          result = JSON.parse(response_text);
+        } catch (e) {
+          console.error("Invalid JSON response");
+        }
+
+        if (result) {
+          if (params.result_key) {
+            result = result[params.result_key];
+          }
+          if (params.parseResult) {
+            result = params.parseResult(result);
+          }
+        }
+      } else {
+        if (params.parseHeaders) {
+          result = params.parseHeaders(headers);
+        }
+      }
+
+      callback(null, result);
+    }
+
+    // Redirects are handled transparently by XMLHttpRequest.
+    // Handle errors (4xx, 5xx)
+    if (status === 0 || status >= 400) {
+      var api_error,
+          message,
+          Err = error.get_error(status),
+          err;
+
+      try {
+        api_error = JSON.parse(response_text);
+        if (api_error.hasOwnProperty('error')) api_error = api_error.error;
+        // NOTE: The following are for stupid Cinder errors.
+        if (api_error.hasOwnProperty('badRequest')) api_error = api_error.badRequest;
+        if (api_error.hasOwnProperty('overLimit')) api_error = api_error.overLimit;
+        if (api_error.hasOwnProperty('forbidden')) api_error = api_error.forbidden;
+        message = api_error.message;
+      }
+      catch (problem) {
+        message = response_text;
+      }
+
+      err = new Err(status, message, api_error);
+
+      callback(err);
+    }
+  },
+
   // Core method for making requests to API endpoints.
   // All other methods eventually route back to this one.
   request: function (params, callback) {
@@ -101,7 +205,6 @@ var Client = Class.extend({
         url = params.url,
         dataType,
         data,
-        result,
         headers,
         method;
 
@@ -154,19 +257,7 @@ var Client = Class.extend({
       }
     }
 
-    function log_request(level, method, url, headers, data) {
-      var args = [level, "\nREQ:", method, url, client.format_headers(headers)];
-      if (data) args = args.concat(["\nbody:", client.redact(data, client.redacted_request)]);
-      client.log.apply(client, args);
-    }
-
-    function log_response(level, method, url, status, headers, data) {
-      var args = [level, "\nRES:", method, url, "\nstatus:", status, "\n", headers];
-      if (data) args = args.concat(["\nbody:", client.redact(data, client.redacted_response)]);
-      client.log.apply(client, args);
-    }
-
-    function end(err) {
+    function end(err, result) {
       if (!err && params.defer) {
         return params.defer(result, function (e, r) {
           params.defer = null;
@@ -192,88 +283,17 @@ var Client = Class.extend({
     xhr.onreadystatechange = function () {
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
-        // We may have missed logging the request that triggered the error
-        // if the log level was too low so we check and log here.
-        if ((status === 0 || status >= 400) && client._log_level < client.log_levels.error) {
-          log_request("error", method, url, headers, data);
-        }
+        var lines = xhr.getAllResponseHeaders().split(/\r\n|\r|\n/),
+            headers = {};
 
-        var response_text = xhr.responseText,
-            // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
-            truncate_at = client.truncate_response_at === -1 ? (params.truncate_at || client.truncate_response_at) : client.truncate_response_at;
-
-        if (
-          client.truncate_long_response &&
-          truncate_at >= 0 &&
-          response_text.length >= client.truncate_response_at
-        ) {
-          response_text = response_text.substring(0, truncate_at) + "... (truncated)";
-        }
-
-        if (status === 0) {
-          response_text = "<REQUEST ABORTED>";
-        }
-
-
-        log_response((status === 0 || status >= 400) ? "error" : "info",
-            method, url, status, xhr.getAllResponseHeaders(), response_text);
-
-
-        // Response handling.
-        // Ignore informational codes for now (1xx).
-        // Handle successes (2xx).
-        if (status >= 200 && status < 300) {
-          if (params.raw_result) {
-            result = xhr.responseText;
-          } else if (xhr.responseText) {
-            try {
-              result = JSON.parse(xhr.responseText);
-            } catch (e) {
-              console.error("Invalid JSON response");
-            }
-
-            if (result) {
-              if (params.result_key) {
-                result = result[params.result_key];
-              }
-              if (params.parseResult) {
-                result = params.parseResult(result);
-              }
-            }
-          } else {
-            if (params.parseHeaders) {
-              result = params.parseHeaders(xhr);
-            }
+        lines.forEach(function (line) {
+          var matches = line.match(/^(.*)?: (.*)$/);
+          if (matches) {
+            headers[matches[0].toLowerCase()] = matches[1];
           }
+        });
 
-          end();
-        }
-
-        // Redirects are handled transparently by XMLHttpRequest.
-        // Handle errors (4xx, 5xx)
-        if (status === 0 || status >= 400) {
-          var api_error,
-              message,
-              Err = error.get_error(status),
-              err;
-
-          try {
-            api_error = JSON.parse(xhr.responseText);
-            if (api_error.hasOwnProperty('error')) api_error = api_error.error;
-            // NOTE: The following are for stupid Cinder errors.
-            if (api_error.hasOwnProperty('badRequest')) api_error = api_error.badRequest;
-            if (api_error.hasOwnProperty('overLimit')) api_error = api_error.overLimit;
-            if (api_error.hasOwnProperty('forbidden')) api_error = api_error.forbidden;
-            message = api_error.message;
-          }
-          catch (problem) {
-            message = xhr.responseText;
-          }
-
-          err = new Err(status, message, api_error);
-
-          end(err);
-        }
+        client.process_response(method, url, data, status, xhr.responseText, headers, params, end);
       }
     };
 
@@ -282,7 +302,7 @@ var Client = Class.extend({
     // Finally, send out the request.
     if (dataType === 'string' || dataType === 'number') {
       data = params.data;
-      log_request("info", method, url, headers, data);
+      client.log_request("info", method, url, headers, data);
       xhr.send(params.data);
 
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
@@ -293,11 +313,11 @@ var Client = Class.extend({
         data = JSON.stringify(params.data);
       }
 
-      log_request("info", method, url, headers, data);
+      client.log_request("info", method, url, headers, data);
       xhr.send(data);
 
     } else {
-      log_request("info", method, url, headers);
+      client.log_request("info", method, url, headers);
       xhr.send();
     }
 
@@ -570,7 +590,47 @@ var Manager = Class.extend({
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[params.http_method || this.method_map.del](params, callback);
-  }
+  },
+
+  // Method to initiate binary file transfers since the XMLHttpRequest
+  // library currently tries to transfer everything as utf8, and browsers
+  // don't support streaming transfers via XHR.
+  _openBinaryStream: function (params, headers, token, callback) {
+    var client = this.client;
+
+    var matches = params.url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i),
+        host_and_port = matches[1].split(':');
+
+    var options = {
+      hostname: host_and_port[0],
+      port: host_and_port[1],
+      path: '/' + params.url.substring(matches[0].length),
+      method: params.method,
+      headers: {
+        'X-Auth-Token': token
+      }
+    };
+
+    // Create our XMLHttpRequest and set headers.
+    for (var header in headers) {
+      if (headers.hasOwnProperty(header)) {
+        options.headers[header] = headers[header];
+      }
+    }
+
+    // For our initial connection, simply indicate that the socket is ready.
+    var request = http.request(options).on('socket', function (socket) {
+      callback();
+    });
+
+    client.log('info', '\nREQ:', params.method, params.url);
+    Object.keys(options.headers).forEach(function (key) {
+      client.log('info', key + ":", options.headers[key]);
+    });
+
+    // Return a StreamingUpload object so we can continue writing to it.
+    return new StreamingUpload(this.client, request, params);
+  },
 });
 
 exports.Client = Client;
