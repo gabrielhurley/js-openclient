@@ -1,4 +1,5 @@
 var XMLHttpRequest = require("./io").XMLHttpRequest,
+    URL = require('url'),
     async = require("async"),
     Class = require("./inheritance").Class,
     crypto = require('crypto'),
@@ -128,7 +129,15 @@ var Client = Class.extend({
     method = params.method.toUpperCase();
 
     headers = params.headers || {};
-    if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
+
+    if (!headers["Content-Type"]) {
+      if (params.use_http_form_data) {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      } else {
+        headers["Content-Type"] = "application/json";
+      }
+    }
+
     headers.Accept = "application/json";
 
     headers['X-Requested-With'] = this.user_agent;
@@ -278,7 +287,11 @@ var Client = Class.extend({
 
     } else if (dataType === 'object' && Object.keys(params.data).length > 0) {
       // Data is guaranteed to be an object by this point.
-      data = JSON.stringify(params.data);
+      if (params.use_http_form_data) {
+        data = URL.format({query: params.data}).substr(1);
+      } else {
+        data = JSON.stringify(params.data);
+      }
 
       log_request("info", method, url, headers, data);
       xhr.send(data);
