@@ -2,6 +2,8 @@ var base = require("../../client/base"),
     VolumeManager = require('./volumes'),
     SnapshotManager = require('./snapshots'),
     QuotaManager = require('./quotas'),
+    AZManager = require('./availability_zones'),
+    TypeManager = require('./types'),
     LimitManager = require('./limits');
 
 var Cinder = base.Client.extend({
@@ -15,6 +17,8 @@ var Cinder = base.Client.extend({
     this.snapshots = new SnapshotManager(this);
     this.quotas = new QuotaManager(this);
     this.limits = new LimitManager(this);
+    this.availability_zones = new AZManager(this);
+    this.types = new TypeManager(this);
   }
 });
 
