@@ -102,7 +102,7 @@ var ServerManager = base.Manager.extend({
     return this.client.post(params, callback);
   },
 
-  reboot: function (params, callback) { return this._action(params, "reboot", {'type': 'HARD'}, callback); },
+  reboot: function (params, callback) { return this._action(params, "reboot", {type: 'HARD'}, callback); },
 
   migrate: function (params, callback) { return this._action(params, "migrate", null, callback); },
 
@@ -120,6 +120,9 @@ var ServerManager = base.Manager.extend({
 
   rescue: function (params, callback) { return this._action(params, "rescue", null, callback); },
   unrescue: function (params, callback) { return this._action(params, "unrescue", null, callback); },
+
+  set_active_state: function (params, callback) { return this._action(params, "os-resetState", {state: "active"}, callback); },
+  set_error_state: function (params, callback) { return this._action(params, "os-resetState", {state: "error"}, callback); },
 
   snapshot: function (params, callback) {
     var extra = {name: params.data.name, metadata: {}};
@@ -233,7 +236,6 @@ var ServerManager = base.Manager.extend({
   // set_meta
   // delete_meta
   // live_migrate
-  // reset_state
   // change_password
   // diagnostics
   // actions
