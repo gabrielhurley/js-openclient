@@ -120,8 +120,8 @@ var UserManager = base.Manager.extend({
         result_user.enabled = results.enabled.extra.enabled;
       }
       // FIXME(gabriel): This should fill in the rest of the details.
-      if (callback) callback(result_user);
-      success(result_user);
+      if (callback) callback(null, result_user, {status: 200});
+      if (success) success(result_user, {status: 200});
     });
   },
 
