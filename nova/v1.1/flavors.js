@@ -43,7 +43,7 @@ var FlavorManager = base.Manager.extend({
 
           if (found_flavor) {
             if (callback) callback(null, found_flavor, {status: 200});
-            if (params.error) params.success(found_flavor, {status: 200});
+            if (params.success) params.success(found_flavor, {status: 200});
           } else {
             var error = {
               message: "Flavor not found",
@@ -158,8 +158,8 @@ var FlavorManager = base.Manager.extend({
           return;
         }
 
-        if (callback) callback(null, flavors);
-        if (params.success) params.success(flavors);
+        if (callback) callback(null, flavors, {status: 200});
+        if (params.success) params.success(flavors, {status: 200});
       });
     });
   }

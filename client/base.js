@@ -103,7 +103,7 @@ var Client = Class.extend({
   },
 
   log_response: function (level, method, url, status, headers, data) {
-    var args = [level, "\nRES:", method, url, "\nstatus:", status, "\n", headers];
+    var args = [level, "\nRES:", method, url, "\nstatus:", status, this.format_headers(headers)];
     if (data) args = args.concat(["\nbody:", this.redact(data, this.redacted_response)]);
     this.log.apply(this, args);
   },
@@ -283,13 +283,22 @@ var Client = Class.extend({
     xhr.onreadystatechange = function () {
       var status = parseInt(xhr.status, 10);
       if (xhr.readyState === 4) {
-        var lines = xhr.getAllResponseHeaders().split(/\r\n|\r|\n/),
+        var raw_headers = xhr.getAllResponseHeaders(),
+            lines = raw_headers.split(/\r\n|\r|\n|;/),
             headers = {};
-
         lines.forEach(function (line) {
-          var matches = line.match(/^(.*)?: (.*)$/);
+          var matches;
+          line = line.trim();
+          // Standard header format.
+          matches = line.match(/^(.*)?: (.*)$/);
           if (matches) {
-            headers[matches[0].toLowerCase()] = matches[1];
+            headers[matches[1].toLowerCase()] = matches[2];
+          } else {
+            // Sometimes headers come back from XHR with an = sign instead of a colon...
+            matches = line.match(/^(.*)?=(.*)$/);
+            if (matches) {
+              headers[matches[1].toLowerCase()] = matches[2];
+            }
           }
         });
 

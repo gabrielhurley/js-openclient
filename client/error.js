@@ -2,7 +2,7 @@ var inherits = require('util').inherits;
 
 
 function defineErrorType(name, init) {
-  var constructor = function _error(message) {
+  var constructor = function error(message) {
     if (init) init.apply(this, arguments);
     Error.call(this, this.message || message);
   };
