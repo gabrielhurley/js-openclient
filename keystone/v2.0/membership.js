@@ -37,7 +37,11 @@ var ProjectMembershipManager = base.Manager.extend({
         manager.client.get({
           url: url,
           result_key: "roles",
-          error: next,
+          error: function (err) {
+            manager.client.log('error', 'Unable to retrieve roles for user "' + user.name + '"');
+            user.roles = null;
+            next();
+          },
           success: function (roles) {
             user.roles = roles;
             next();

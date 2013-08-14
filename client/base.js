@@ -108,13 +108,13 @@ var Client = Class.extend({
     this.log.apply(this, args);
   },
 
-  process_response: function (method, url, data, status, response_text, headers, params, callback) {
+  process_response: function (method, url, data, status, response_text, req_headers, resp_headers, params, callback) {
     var client = this;
 
     // We may have missed logging the request that triggered the error
     // if the log level was too low so we check and log here.
     if ((status === 0 || status >= 400) && client._log_level < client.log_levels.error) {
-      client.log_request("error", method, url, headers, data);
+      client.log_request("error", method, url, req_headers, data);
     }
 
     // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
@@ -134,7 +134,7 @@ var Client = Class.extend({
 
 
     client.log_response((status === 0 || status >= 400) ? "error" : "info",
-                        method, url, status, headers, response_text);
+                        method, url, status, resp_headers, response_text);
 
 
     // Response handling.
@@ -162,7 +162,7 @@ var Client = Class.extend({
         }
       } else {
         if (params.parseHeaders) {
-          result = params.parseHeaders(headers);
+          result = params.parseHeaders(resp_headers);
         }
       }
 
@@ -285,24 +285,24 @@ var Client = Class.extend({
       if (xhr.readyState === 4) {
         var raw_headers = xhr.getAllResponseHeaders(),
             lines = raw_headers.split(/\r\n|\r|\n|;/),
-            headers = {};
+            resp_headers = {};
         lines.forEach(function (line) {
           var matches;
           line = line.trim();
           // Standard header format.
           matches = line.match(/^(.*)?: (.*)$/);
           if (matches) {
-            headers[matches[1].toLowerCase()] = matches[2];
+            resp_headers[matches[1].toLowerCase()] = matches[2];
           } else {
             // Sometimes headers come back from XHR with an = sign instead of a colon...
             matches = line.match(/^(.*)?=(.*)$/);
             if (matches) {
-              headers[matches[1].toLowerCase()] = matches[2];
+              resp_headers[matches[1].toLowerCase()] = matches[2];
             }
           }
         });
 
-        client.process_response(method, url, data, status, xhr.responseText, headers, params, end);
+        client.process_response(method, url, data, status, xhr.responseText, headers, resp_headers, params, end);
       }
     };
 
