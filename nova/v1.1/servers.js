@@ -33,7 +33,12 @@ var ServerManager = base.Manager.extend({
     }
     // Base64 encode user data if present
     if (params.data.user_data) {
-      params.data.user_data = new Buffer(params.data.user_data).toString('base64');
+      // Use Buffer built-in if in node, otherwise use btoa in the browser
+      if (typeof Buffer !== 'undefined') {
+        params.data.user_data = new Buffer(params.data.user_data).toString('base64');
+      } else {
+        params.data.user_data = btoa(params.data.user_data);
+      }
     }
     return this._super(params, callback);
   },
