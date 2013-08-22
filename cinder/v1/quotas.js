@@ -28,28 +28,24 @@ var QuotaManager = base.Manager.extend({
   },
 
   usages: function (params, callback) {
-    var usages = {},
+    var manager = this,
+        usages = {},
         flavors = {};
 
     usages.id = this.client.tenant.id;
     usages.gigabytes = 0;
     usages.disk = 0;
 
-    this.client.volumes.all({
-      detail: true,
-      success: function (volumes) {
-        usages.volumes = volumes.length;
-        volumes.forEach(function (volume) {
-          usages.gigabytes += volume.size;
-          usages.disk += volume.size;
-        });
-        if (callback) callback(null, usages);
-        return params.success(usages);
-      },
-      error: function (err) {
-        if (callback) callback(err);
-        return params.error(err);
-      }
+    this.client.volumes.all({detail: true}, function (err, volumes) {
+      if (err) return manager.safe_complete(err, null, null, params, callback);
+
+      usages.volumes = volumes.length;
+      volumes.forEach(function (volume) {
+        usages.gigabytes += volume.size;
+        usages.disk += volume.size;
+      });
+
+      manager.safe_complete(err, usages, {status: 200}, params, callback);
     });
   }
 });

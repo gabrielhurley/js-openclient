@@ -104,10 +104,8 @@ var UserManager = base.Manager.extend({
       project: update_project,
       password: update_password
     }, function (err, results) {
-      if (err) {
-        if (callback) callback(err);
-        return error(err);
-      }
+      // TODO: preserve original error xhr
+      if (err) return manager.safe_complete(err, null, null, params, callback);
 
       var result_user = {id: params.id};
       if (results.basics) {
@@ -119,9 +117,8 @@ var UserManager = base.Manager.extend({
       if (results.enabled) {
         result_user.enabled = results.enabled.extra.enabled;
       }
-      // FIXME(gabriel): This should fill in the rest of the details.
-      if (callback) callback(null, result_user, {status: 200});
-      if (success) success(result_user, {status: 200});
+
+      manager.safe_complete(err, result_user, {status: 200}, {success: success}, callback);
     });
   },
 

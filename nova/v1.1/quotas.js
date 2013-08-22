@@ -80,11 +80,8 @@ var QuotaManager = base.Manager.extend({
         });
       }
     ], function (err) {
-      if (err) {
-        if (callback) callback(err);
-        if (params.error) params.error(err);
-        return;
-      }
+      // TODO: preserve original error code.
+      if (err) return manager.safe_complete(err, null, null, params, callback);
 
       usages.instances = instances.length;
 
@@ -98,8 +95,7 @@ var QuotaManager = base.Manager.extend({
         usages["OS-FLV-EXT-DATA:ephemeral"] += flavor["OS-FLV-EXT-DATA:ephemeral"];
       });
 
-      if (callback) callback(null, usages);
-      if (params.success) params.success(usages);
+      manager.safe_complete(err, usages, {status: 200}, params, callback);
     });
   }
 });

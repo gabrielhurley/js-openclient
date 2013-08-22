@@ -24,6 +24,8 @@ var FlavorManager = base.Manager.extend({
   },
 
   get: function (params, callback) {
+    var manager = this;
+
     params.id = params.id || params.data.id;
 
     if (params.include_deleted) {
@@ -31,8 +33,7 @@ var FlavorManager = base.Manager.extend({
     } else {
       this.all({}, function (err, flavors, xhr) {
         if (err) {
-          if (callback) callback(err, xhr);
-          if (params.error) params.error(err, xhr);
+          manager.safe_complete(err, null, xhr, params, callback);
         } else {
           var found_flavor;
 
@@ -42,15 +43,13 @@ var FlavorManager = base.Manager.extend({
           });
 
           if (found_flavor) {
-            if (callback) callback(null, found_flavor, {status: 200});
-            if (params.success) params.success(found_flavor, {status: 200});
+            manager.safe_complete(err, found_flavor, {status: 200}, params, callback);
           } else {
             var error = {
               message: "Flavor not found",
               status: 404
             };
-            if (callback) callback(error, null, {status: 404});
-            if (params.error) params.error(error, {status: 404});
+            manager.safe_complete(error, null, {status: 404}, params, callback);
           }
         }
       });
@@ -70,18 +69,15 @@ var FlavorManager = base.Manager.extend({
         manager.create({
           data: params.data,
           success: function (flavor, xhr) {
-            if (callback) callback(null, flavor, xhr);
-            if (params.success) params.success(flavor, xhr);
+            manager.safe_complete(null, flavor, xhr, params, callback);
           },
           error: function (err, xhr) {
-            if (callback) callback(err, xhr);
-            if (params.error) params.error(err, xhr);
+            manager.safe_complete(err, null, xhr, params, callback);
           }
         });
       },
       error: function (err, xhr) {
-        if (callback) callback(err, xhr);
-        if (params.error) params.error(err, xhr);
+        manager.safe_complete(err, null, xhr, params, callback);
       }
     });
   },
@@ -128,11 +124,7 @@ var FlavorManager = base.Manager.extend({
         });
       }
     ], function (err) {
-      if (err) {
-        if (callback) callback(err);
-        if (params.error) params.error(err);
-        return;
-      }
+      if (err) return manager.safe_complete(err, null, null, params, callback);
 
       var missing_flavor_calls = [];
       // Fetch any "deleted" flavors which may still be referened
@@ -152,14 +144,8 @@ var FlavorManager = base.Manager.extend({
       });
 
       async.parallel(missing_flavor_calls, function (err) {
-        if (err) {
-          if (callback) callback(err);
-          if (params.error) params.error(err);
-          return;
-        }
-
-        if (callback) callback(null, flavors, {status: 200});
-        if (params.success) params.success(flavors, {status: 200});
+        if (err) return manager.safe_complete(err, null, null, params, callback);
+        manager.safe_complete(err, flavors, {status: 200}, params, callback);
       });
     });
   }

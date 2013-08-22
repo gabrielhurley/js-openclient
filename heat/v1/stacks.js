@@ -27,11 +27,7 @@ var StacksManager = base.Manager.extend({
     });
 
     this._super(params, function (err, result, xhr) {
-      if (err) {
-        if (error) error(err);
-        if (callback) callback(err);
-        return;
-      }
+      if (err) return manager.safe_complete(err, null, null, params, callback);
       manager.get({
         url: xhr.getResponseHeader('location'),
         success: success,
@@ -51,32 +47,23 @@ var StacksManager = base.Manager.extend({
     if (params.error) delete params.error;
 
     this._super(params, function (err, results, xhr) {
-      if (err) {
-        if (error) error(err);
-        if (callback) callback(err);
-        return;
-      }
+      if (err) return manager.safe_complete(err, null, null, {error: error}, callback);
 
       var detailed = [];
 
       async.forEach(results, function (stack, done) {
         manager.get({url: stack.links[0].href}, function (err, result) {
           if (err) {
-            if (error) error(err);
-            if (callback) callback(err);
+            manager.safe_complete(err, null, null, {error: error}, callback);
           } else {
             detailed.push(result);
           }
           done();
         });
       }, function (err) {
-        if (err) {
-          if (error) error(err);
-          if (callback) callback(err);
-        } else {
-          if (success) success(detailed);
-          if (callback) callback(null, detailed);
-        }
+        // TODO: retain original error status
+        if (err) return manager.safe_complete(err, null, null, {error: error}, callback);
+        manager.safe_complete(err, detailed, {status: 200}, {success: success}, callback);
       });
     });
   },

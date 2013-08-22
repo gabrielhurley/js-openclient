@@ -72,13 +72,8 @@ var ImageManager = base.Manager.extend({
     delete params.data;
 
     var uploader = this._openBinaryStream(params, params.headers, this.client.scoped_token.id, function (err, result) {
-      if (err) {
-        if (callback) callback(err);
-        if (params.error) params.error(err);
-      } else {
-        if (callback) callback(null, result, {status: 100});
-        if (params.success) params.success(result, {status: 100});
-      }
+      if (err) return manager.safe_complete(err, null, null, params, callback);
+      manager.safe_complete(err, result, {status: 100}, params, callback);
     });
 
     uploader.success = function (result, success_callback) {

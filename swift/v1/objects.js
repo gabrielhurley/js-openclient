@@ -118,19 +118,17 @@ var ObjectManager = base.Manager.extend({
   },
 
   download: function (params, callback) {
+    var manager = this;
+
     params.id = params.id || params.data.id || this._safe_id(params.data.name);
     params.container = params.data.container;
     params.url = this.get_base_url(params) + "/" + params.id;
     params.method = "GET";
     delete params.data;
+
     this._doBinaryRequest(params, this.client.scoped_token.id, function (err, result) {
-      if (err) {
-        if (callback) callback(err);
-        if (params.error) params.error(err);
-      } else {
-        if (callback) callback(null, result);
-        if (params.success) params.success(result, {status: 200});
-      }
+      if (err) return manager.safe_complete(err, null, null, params, callback);
+      manager.safe_complete(err, result, {status: 200}, params, callback);
     });
   },
 
@@ -149,13 +147,8 @@ var ObjectManager = base.Manager.extend({
     delete params.data;
 
     var uploader = this._openBinaryStream(params, params.headers, this.client.scoped_token.id, function (err, result) {
-      if (err) {
-        if (callback) callback(err);
-        if (params.error) params.error(err);
-      } else {
-        if (callback) callback(null, result, {status: 100});
-        if (params.success) params.success(result, {status: 100});
-      }
+      if (err) return manager.safe_complete(err, null, null, params, callback);
+      manager.safe_complete(err, result, {status: 100}, params, callback);
     });
 
     uploader.success = function (response_data, success_callback) {

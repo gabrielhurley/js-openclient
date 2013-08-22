@@ -77,13 +77,20 @@ var ServerManager = base.Manager.extend({
   volumes: function (params, callback) {
     var Cinder = require("../../cinder/v1/client");  // Avoid circular imports.
 
-    var cinder = new Cinder(this.client),
-        success = params.success;
+    var manager = this,
+        cinder = new Cinder(this.client),
+        success = params.success,
+        error = params.error;
 
-    params.success = function (results, xhr) {
+    if (params.success) delete params.success;
+    if (params.error) delete params.error;
+
+    return this.attachments(params, function (err, results, xhr) {
+      if (err) return manager.safe_complete(err, null, xhr, {error: error}, callback);
+
       var new_params = {
         success: success,
-        error: params.error,
+        error: error,
         data: {
           ids: []
         }
@@ -94,9 +101,7 @@ var ServerManager = base.Manager.extend({
       });
 
       cinder.volumes.in_bulk(new_params, callback);
-    };
-
-    return this.attachments(params);
+    });
   },
 
   _action: function (params, action, info, callback) {
@@ -186,11 +191,15 @@ var ServerManager = base.Manager.extend({
               success: function (ip) {
                 return finish(ip.ip);
               },
-              error: params.error
+              error: function (err, xhr) {
+                manager.safe_complete(err, null, xhr, params, callback);
+              }
             });
           }
         },
-        error: params.error
+        error: function (err, xhr) {
+          manager.safe_complete(err, null, xhr, params, callback);
+        }
       });
     }
   },
@@ -220,10 +229,16 @@ var ServerManager = base.Manager.extend({
           if (associated) {
             return finish(associated);
           } else {
-            params.error('No floating IP associated with this instance.');
+            var err = {
+              message: 'No floating IP associated with this instance.',
+              status: 400
+            };
+            manager.safe_complete(err, null, {status: 400}, params, callback);
           }
         },
-        error: params.error
+        error: function (err, xhr) {
+          manager.safe_complete(err, null, xhr, params, callback);
+        }
       });
     }
   }

@@ -83,23 +83,16 @@ var VolumeManager = base.Manager.extend({
             });
 
             async.parallel(calls, function (err) {
-              if (err) {
-                if (callback) callback(err);
-                params.error(err);
-              }
-              else {
-                if (callback) callback(null);
-                params.success(null, {status: 202});
-              }
+              // TODO: preserve original error status code
+              if (err) return manager.safe_complete(err, null, null, params, callback);
+              manager.safe_complete(null, null, {status: 202}, params, callback);
             });
           } else {
-            if (callback) callback(null);
-            params.success(null, {status: 202});
+            manager.safe_complete(null, null, {status: 202}, params, callback);
           }
         },
-        error: function (err) {
-          if (callback) callback(err);
-          params.error(err);
+        error: function (err, xhr) {
+          manager.safe_complete(err, null, xhr, params, callback);
         }
       });
     } else {

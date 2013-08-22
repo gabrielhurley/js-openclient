@@ -69,8 +69,8 @@ var Client = Class.extend({
   log_level_method_map: {
     100: function (string) { console.error(color.bold(color.red(string))); },
     80: function (string) { console.error(color.red(string)); },
-    60: function (string) { console.error(color.yellow(string)); },
-    40: function (string) { console.error(color.cyan(string)); },
+    60: function (string) { console.warn(color.yellow(string)); },
+    40: function (string) { console.info(color.cyan(string)); },
     20: console.log
   },
 
@@ -170,7 +170,7 @@ var Client = Class.extend({
         try {
           result = JSON.parse(response_text);
         } catch (e) {
-          console.error("Invalid JSON response");
+          client.log("error", "Invalid JSON response");
         }
 
         if (result) {
@@ -292,9 +292,6 @@ var Client = Class.extend({
       if (!err && params.success) {
         params.success(result, xhr);
       }
-      if (params.complete) {
-        params.complete(result, xhr, err);
-      }
       if (callback) {
         callback(err, result, xhr);
       }
@@ -409,7 +406,7 @@ var Client = Class.extend({
         }
       }
 
-      if (callback) callback(null, result);
+      if (callback) callback(null, result, xhr);
       if (params.success) params.success(client, xhr);
     }
 
@@ -555,14 +552,14 @@ var Manager = Class.extend({
 
   // Fetches a list of objects based on the filter criteria passed in.
   // Default: GET to /<namespace>?<query params>
-  filter: function (params) {
+  filter: function (params, callback) {
     throw new error.NotImplemented();
   },
 
   // Fetches a list of objects based on the filter criteria passed in.
   // Default *SHOULD BE BUT ISN'T*: GET to /<namespace>?<list of ids>
   // In reality the default is to mock this method with parallel get calls.
-  in_bulk: function (params) {
+  in_bulk: function (params, callback) {
     var manager = this,
         lookups = [],
         success = params.success,
@@ -584,9 +581,8 @@ var Manager = Class.extend({
     });
 
     async.parallel(lookups, function (err, results) {
-      if (err && error) return error(err);
-      if (success) success(results);
-      return results;
+      if (err) return manager.safe_complete(err, null, null, {error: error}, callback);
+      manager.safe_complete(null, results, {status: 200}, {success: success}, callback);
     });
   },
 
@@ -620,6 +616,19 @@ var Manager = Class.extend({
     var url = urljoin(this.get_base_url(params), params.id);
     params = this.prepare_params(params, url, "singular");
     return this.client[params.http_method || this.method_map.del](params, callback);
+  },
+
+  // Utility method for applying all the necessary combinations of callbacks
+  // with the right combination of variables.
+  safe_complete: function (err, result, xhr, params, callback) {
+    if (err) {
+      if (!xhr) xhr = {status: 500};
+      if (params.error) params.error(err, xhr);
+    } else {
+      if (!xhr) xhr = {status: 200};
+      if (params.success) params.success(result, xhr);
+    }
+    if (callback) callback(err, result, xhr);
   },
 
   // Method to initiate binary file transfers since the XMLHttpRequest

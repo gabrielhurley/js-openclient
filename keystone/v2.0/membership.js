@@ -23,11 +23,7 @@ var ProjectMembershipManager = base.Manager.extend({
     if (params.error) delete params.error;
 
     this._super(params, function (err, users) {
-      if (err) {
-        if (callback) callback(err);
-        if (error) error(err);
-        return;
-      }
+      if (err) return manager.safe_complete(err, null, null, {error: error}, callback);
 
       // Add in the roles for each user.
       async.forEach(users, function (user, next) {
@@ -48,13 +44,8 @@ var ProjectMembershipManager = base.Manager.extend({
           }
         });
       }, function (err) {
-        if (err) {
-          if (callback) callback(err);
-          if (error) error(err);
-          return;
-        }
-        if (callback) callback(null, users);
-        if (success) success(users);
+        if (err) return manager.safe_complete(err, null, null, {error: error}, callback);
+        manager.safe_complete(err, users, {status: 200}, {success: success}, callback);
       });
     });
   },
@@ -81,25 +72,21 @@ var ProjectMembershipManager = base.Manager.extend({
               url: url,
               result_key: "roles",
               error: function (err, xhr) {
-                if (callback) callback(err);
-                if (params.error) params.error(err, xhr);
+                manager.safe_complete(err, null, xhr, params, callback);
               },
-              success: function (roles) {
+              success: function (roles, xhr) {
                 user.roles = roles;
-                if (callback) callback(user);
-                if (params.success) params.success(user, xhr);
+                manager.safe_complete(null, user, {status: 200}, params, callback);
               }
             });
           },
           error: function (err, xhr) {
-            if (callback) callback(err);
-            if (params.error) params.error(err, xhr);
+            manager.safe_complete(err, null, xhr, params, callback);
           }
         });
       },
       error: function (err, xhr) {
-        if (callback) callback(err);
-        if (params.error) params.error(err, xhr);
+        manager.safe_complete(err, null, xhr, params, callback);
       }
     });
   },
@@ -107,7 +94,8 @@ var ProjectMembershipManager = base.Manager.extend({
   // Pseudo-method that removes a user from a project by removing any and all
   // roles that user may have on the project.
   del: function (params, callback) {
-    var user_roles_manager = this.client.user_roles,
+    var manager = this,
+        user_roles_manager = this.client.user_roles,
         endpoint_type = params.endpoint_type;
 
     user_roles_manager.all({
@@ -133,15 +121,13 @@ var ProjectMembershipManager = base.Manager.extend({
           });
         });
         async.parallel(calls, function (err) {
-          if (err) {
-            if (callback) callback(err);
-            return params.err(err);
-          }
-          if (callback) callback(null);
-          return params.success(null, {status: 200});
+          if (err) return manager.safe_complete(err, null, null, params, callback);
+          manager.safe_complete(err, null, {status: 200}, params, callback);
         });
       },
-      error: params.error
+      error: function (err, xhr) {
+        manager.safe_complete(err, null, xhr, params, callback);
+      }
     });
   }
 });
