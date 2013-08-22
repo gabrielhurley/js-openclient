@@ -1,8 +1,11 @@
 if (typeof XMLHttpRequest !== "undefined") {
 
   exports.XMLHttpRequest = XMLHttpRequest;
+  exports._native = true;
 
 } else {
+
+  exports._native = false;
 
   /**
   * Wrapper for built-in http.js to emulate the browser XMLHttpRequest object.

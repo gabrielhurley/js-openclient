@@ -5,11 +5,20 @@ var crypto = require('crypto'),
 var async = require("async");
 
 var Class = require("./inheritance").Class,
+    color = require("./color"),
     error = require("./error"),
     is_ans1_token = require("./utils").is_ans1_token,
     StreamingUpload = require("./streaming").StreamingUpload,
     urljoin = require("./utils").urljoin,
-    XMLHttpRequest = require("./io").XMLHttpRequest;
+    io = require("./io");
+
+
+var XMLHttpRequest = io.XMLHttpRequest;
+
+
+// There are certain things such as console color capabilities that just
+// can't be feature-detected, sadly. This is a pretty safe alternative.
+color.enable(!io._native);
 
 
 var Client = Class.extend({
@@ -25,6 +34,10 @@ var Client = Class.extend({
     //       works for now.
     'private_key": null, "data'
   ],
+
+  // Small hack, but if we're not using the native XHR, we're almost certainly
+  // in a NodeJS environment, not in a browser.
+  is_browser: io._native,
 
   init: function (options) {
     options = options || {};
@@ -53,12 +66,20 @@ var Client = Class.extend({
     "debug": 20
   },
 
-  // Generic logging placeholder.
-  // TODO(gabriel): Make this better.
+  log_level_method_map: {
+    100: function (string) { console.error(color.bold(color.red(string))); },
+    80: function (string) { console.error(color.red(string)); },
+    60: function (string) { console.error(color.yellow(string)); },
+    40: function (string) { console.error(color.cyan(string)); },
+    20: console.log
+  },
+
+  // Generic logging function that outputs to the appropriate log method with
+  // colorized output, etc.
   log: function (level) {
     if (typeof level !== "number") level = this.log_levels[level];
     if (level >= this._log_level) {
-      console.log(Array.prototype.slice.apply(arguments, [1, arguments.length]).join(" "));
+      this.log_level_method_map[level](Array.prototype.slice.apply(arguments, [1, arguments.length]).join(" "));
     }
   },
 
