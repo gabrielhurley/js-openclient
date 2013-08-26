@@ -24,13 +24,19 @@ function StreamingUpload(client, request, params) {
 
     response.on('end', function () {
       var status = parseInt(response.statusCode, 10),
-          headers = {};
+          req_headers = {},
+          resp_headers = {};
 
-      Object.keys(response.headers).forEach(function (key) {
-        headers[key.toLowerCase()] = response.headers[key];
+      // NOTE (gabriel): Using a Node internal attribute here...
+      Object.keys(request._headers).forEach(function (key) {
+        req_headers[key.toLowerCase()] = request._headers[key];
       });
 
-      client.process_response(upload.params.method, upload.params.url, '<binary data>', status, response_data, headers, upload.params, function (err, result) {
+      Object.keys(response.headers).forEach(function (key) {
+        resp_headers[key.toLowerCase()] = response.headers[key];
+      });
+
+      client.process_response(upload.params.method, upload.params.url, '<binary data>', status, response_data, req_headers, resp_headers, upload.params, function (err, result) {
         if (err) {
           upload.callback(err, null, {status: status});
         } else {

@@ -42,6 +42,8 @@ var ObjectManager = base.Manager.extend({
     var response_data = "";
 
     var request = http.request(options, function (response) {
+      if (response.statusCode === 0 || response.statusCode > 400) callback(response, null, {status: response.statusCode});
+
       var response_headers = ["Content-Length", "Content-Type", "Content-Encoding", "Last-Modified", "ETag"];
       response_headers.forEach(function (header) {
         if (response.headers[header.toLowerCase()]) {
@@ -51,6 +53,7 @@ var ObjectManager = base.Manager.extend({
       params.pipe.setHeader("Content-Disposition", 'attachment; filename="' + params.id + '"');
       response.pipe(params.pipe);
 
+      // TODO: Use standard response logging method here.
       client.log("info",
                  "\nRES:", params.method, params.url,
                  "\nstatus:", response.statusCode);
@@ -60,13 +63,13 @@ var ObjectManager = base.Manager.extend({
 
       response.on('end', function () {
         client.log("info", "body:", "<binary data>");
-        callback(null, response_data);
+        callback(null, response_data, {status: 200});
       });
 
     });
 
     request.on('error', function (err) {
-      callback(err);
+      callback(err, null, {status: 500});
     });
 
     client.log("info", "\nREQ:", params.method, params.url);
@@ -126,9 +129,9 @@ var ObjectManager = base.Manager.extend({
     params.method = "GET";
     delete params.data;
 
-    this._doBinaryRequest(params, this.client.scoped_token.id, function (err, result) {
-      if (err) return manager.safe_complete(err, null, null, params, callback);
-      manager.safe_complete(err, result, {status: 200}, params, callback);
+    this._doBinaryRequest(params, this.client.scoped_token.id, function (err, result, xhr) {
+      if (err) return manager.safe_complete(err, null, xhr, params, callback);
+      manager.safe_complete(err, result, xhr, params, callback);
     });
   },
 

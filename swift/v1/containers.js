@@ -35,16 +35,12 @@ var ContainerManager = base.Manager.extend({
     delete params.data;
 
     this._super(params, function (err, result, xhr) {
-      if (err) return manager.safe_complete(err, null, xhr, params, callback);
+      if (err) return manager.safe_complete(err, null, xhr, {error: error}, callback);
 
-      if (!result) {
-        manager.get({id: params.id,}, function (err, result, xhr) {
-          if (err) return manager.safe_complete(err, null, xhr, params, callback);
-          manager.safe_complete(null, result, xhr, params, callback);
-        });
-      } else {
-        manager.safe_complete(null, result, xhr, params, callback);
-      }
+      manager.get({id: params.id,}, function (err, result, xhr) {
+        if (err) return manager.safe_complete(err, null, xhr, {error: error}, callback);
+        manager.safe_complete(null, result, xhr, {success: success}, callback);
+      });
     });
   },
 
