@@ -42,7 +42,7 @@ var ObjectManager = base.Manager.extend({
     var response_data = "";
 
     var request = http.request(options, function (response) {
-      if (response.statusCode === 0 || response.statusCode > 400) callback(response, null, {status: response.statusCode});
+      if (response.statusCode === 0 || response.statusCode >= 400) callback(response, null, {status: response.statusCode});
 
       var response_headers = ["Content-Length", "Content-Type", "Content-Encoding", "Last-Modified", "ETag"];
       response_headers.forEach(function (header) {
