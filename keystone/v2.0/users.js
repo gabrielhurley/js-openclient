@@ -23,8 +23,6 @@ var UserManager = base.Manager.extend({
     var manager = this,
         pattern = "{id}/OS-KSADM/{action}",
         result = null,
-        success = params.success,
-        error = params.error,
         url, user_id, username, email, default_project, enabled, password,
         update_basics, update_enabled, update_project, update_password;
 
@@ -43,11 +41,12 @@ var UserManager = base.Manager.extend({
       if (username || email) {
         var new_params = {
           data: {id: user_id, name: username, email: email},
-          success: function (result) { done(null, result); },
-          error: done,
           endpoint_type: params.endpoint_type
         };
-        manager._super(new_params);
+        manager._super(new_params, function (err, result, xhr) {
+          if (err) return done({err: err, xhr: xhr});
+          done(null, result);
+        });
       } else {
         done(null);
       }
@@ -57,12 +56,13 @@ var UserManager = base.Manager.extend({
       if (typeof(enabled) !== "undefined") {
         var new_params = {
           data: {id: user_id, enabled: enabled},
-          success: function (result) { done(null, result); },
-          error: done,
           endpoint_type: params.endpoint_type
         };
         new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "enabled"}));
-        manager._super(new_params);
+        manager._super(new_params, function (err, result, xhr) {
+          if (err) return done({err: err, xhr: xhr});
+          done(null, result);
+        });
       } else {
         done(null);
       }
@@ -72,12 +72,13 @@ var UserManager = base.Manager.extend({
       if (default_project) {
         var new_params = {
           data: {id: user_id, tenantId: default_project},
-          success: function (result) { done(null, result); },
-          error: done,
           endpoint_type: params.endpoint_type
         };
         new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "tenant"}));
-        manager._super(new_params);
+        manager._super(new_params, function (err, result, xhr) {
+          if (err) return done({err: err, xhr: xhr});
+          done(null, result);
+        });
       } else {
         done(null);
       }
@@ -87,14 +88,15 @@ var UserManager = base.Manager.extend({
       if (password) {
         var new_params = {
           data: {id: user_id, password: password},
-          success: function (result) { done(null, result); },
-          error: done,
           endpoint_type: params.endpoint_type
         };
         new_params.url = urljoin(manager.get_base_url(params), interpolate(pattern, {id: params.id, action: "password"}));
-        manager._super(new_params);
+        manager._super(new_params, function (err, result, xhr) {
+          if (err) return done({err: err, xhr: xhr});
+          done(null, result);
+        });
       } else {
-        done(null);
+        done();
       }
     };
 
@@ -103,9 +105,8 @@ var UserManager = base.Manager.extend({
       enabled: update_enabled,
       project: update_project,
       password: update_password
-    }, function (err, results) {
-      // TODO: preserve original error xhr
-      if (err) return manager.safe_complete(err, null, null, params, callback);
+    }, function (async_err, results) {
+      if (async_err) return manager.safe_complete(async_err.err, null, async_err.xhr, params, callback);
 
       var result_user = {id: params.id};
       if (results.basics) {
@@ -118,7 +119,7 @@ var UserManager = base.Manager.extend({
         result_user.enabled = results.enabled.extra.enabled;
       }
 
-      manager.safe_complete(err, result_user, {status: 200}, {success: success}, callback);
+      manager.safe_complete(null, result_user, {status: 200}, params, callback);
     });
   },
 

@@ -73,18 +73,17 @@ var VolumeManager = base.Manager.extend({
                     volumeId: vol_id
                   },
                   success: function () {
-                    next(null);
+                    next();
                   },
-                  error: function (err) {
-                    next(err);
+                  error: function (err, xhr) {
+                    next({err: err, xhr: xhr});
                   }
                 });
               });
             });
 
-            async.parallel(calls, function (err) {
-              // TODO: preserve original error status code
-              if (err) return manager.safe_complete(err, null, null, params, callback);
+            async.parallel(calls, function (async_err) {
+              if (async_err) return manager.safe_complete(async_err.err, null, async_err.xhr, params, callback);
               manager.safe_complete(null, null, {status: 202}, params, callback);
             });
           } else {

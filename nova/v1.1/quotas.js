@@ -56,32 +56,29 @@ var QuotaManager = base.Manager.extend({
     usages["OS-FLV-EXT-DATA:ephemeral"] = 0;
 
     async.series([
+      // Grab all the instances...
       function (next) {
-        manager.client.servers.all({
-          detail: true,
-          success: function (results) {
-            instances = results;
-            next(null);
-          },
-          error: next
+        manager.client.servers.all({detail: true}, function (err, results, xhr) {
+          if (err) return next({err: err, xhr: xhr});
+          instances = results;
+          next(null);
         });
       },
+      // Gather up our in-use flavors...
       function (next) {
         manager.client.flavors.in_use({
           instances: instances,
-          detail: true,
-          success: function (results) {
-            results.forEach(function (flavor) {
-              flavors[flavor.id] = flavor;
-            });
-            next(null);
-          },
-          error: next
+          detail: true
+        }, function (err, results, xhr) {
+          if (err) return next({err: err, xhr: xhr});
+          results.forEach(function (flavor) {
+            flavors[flavor.id] = flavor;
+          });
+          next(null);
         });
       }
-    ], function (err) {
-      // TODO: preserve original error code.
-      if (err) return manager.safe_complete(err, null, null, params, callback);
+    ], function (async_err) {
+      if (async_err) return manager.safe_complete(async_err.err, null, async_err.xhr, params, callback);
 
       usages.instances = instances.length;
 
