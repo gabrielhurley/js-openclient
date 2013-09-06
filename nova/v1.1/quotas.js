@@ -92,7 +92,7 @@ var QuotaManager = base.Manager.extend({
         usages["OS-FLV-EXT-DATA:ephemeral"] += flavor["OS-FLV-EXT-DATA:ephemeral"];
       });
 
-      manager.safe_complete(err, usages, {status: 200}, params, callback);
+      manager.safe_complete(async_err, usages, {status: 200}, params, callback);
     });
   }
 });
