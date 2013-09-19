@@ -31,6 +31,12 @@ var ServerManager = base.Manager.extend({
         return {"name": sg};
       });
     }
+
+    if (params.data.scheduler_hints) {
+      params.data['os:scheduler_hints'] = params.data.scheduler_hints;
+      delete params.data.scheduler_hints;
+    }
+
     // Base64 encode user data if present
     if (params.data.user_data) {
       // Use Buffer built-in if in Node, otherwise use btoa in the browser
