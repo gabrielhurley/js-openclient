@@ -38,7 +38,6 @@ defineErrorType('Aborted', function () {
   this.message = 'Request aborted';
 });
 
-
 defineErrorType('ClientError', function (status, message, api_error) {
   this.status = status;
   if (message) {
@@ -50,9 +49,19 @@ defineErrorType('ClientError', function (status, message, api_error) {
   }
 });
 
+defineErrorType('BadRequest', function (status, message, api_error) {
+  this.status = status;
+
+  if (message) this.message = message;
+  // If we have a api_error that was parsed into an object, pass it along as it may have
+  // validation rules in it that are useful.
+  if (api_error && typeof api_error === 'object') this.body = api_error;
+});
+
 
 var code_map = {
   0: exports.Aborted,
+  400: exports.BadRequest,
   404: exports.NotFound,
   409: exports.Conflict,
   503: exports.NotImplemented
@@ -62,3 +71,4 @@ var code_map = {
 exports.get_error = function (status) {
   return code_map[status] || exports.ClientError;
 };
+
