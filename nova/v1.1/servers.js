@@ -122,8 +122,8 @@ var ServerManager = base.Manager.extend({
 
   migrate: function (params, callback) { return this._action(params, "migrate", null, callback); },
 
-  stop: function (params, callback) { return this._action(params, "stop", null, callback); },
-  start: function (params, callback) { return this._action(params, "start", null, callback); },
+  stop: function (params, callback) { return this._action(params, "os-stop", null, callback); },
+  start: function (params, callback) { return this._action(params, "os-start", null, callback); },
 
   pause: function (params, callback) { return this._action(params, "pause", null, callback); },
   unpause: function (params, callback) { return this._action(params, "unpause", null, callback); },
