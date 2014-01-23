@@ -3,6 +3,13 @@ var base = require("../../client/base"),
 
 // TODO(roland): Make methods throw NotImplemented where applicable.
 
+var FloatingIPBulkManager = base.Manager.extend({
+  namespace: "os-floating-ips-bulk",
+  plural: "floating_ip_info",
+  singular: "floating_ip"
+});
+
+
 var FloatingIPManager = base.Manager.extend({
   namespace: "os-floating-ips",
   plural: "floating_ips",
@@ -48,6 +55,18 @@ var FloatingIPManager = base.Manager.extend({
       },
       error: params.error
     }, callback);
+  },
+
+  in_use: function (params, callback) {
+    params.parseResult = function (result) {
+      var in_use = [];
+      result.forEach(function (ip) {
+        if (ip.project_id) in_use.push(ip);
+      });
+      return in_use;
+    };
+
+    new FloatingIPBulkManager(this.client).all(params, callback);
   }
 });
 
