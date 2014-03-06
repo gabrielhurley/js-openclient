@@ -87,22 +87,32 @@ for (var protocol in protocols) {
           // need to use url.resolve() in case location is a relative URL
           var redirectUrl = url.resolve(reqUrl, res.headers['location']);
           // we need to call the right api (http vs https) depending on protocol
-          var proto = url.parse(redirectUrl).protocol;
-          proto = proto.substr(0, proto.length - 1);
 
-          // Make a new option object for next request from old options object
-          // Break url in parts
-          var searchname = url.parse(redirectUrl).search;
-          var hostname = url.parse(redirectUrl).hostname;
-          var pathname = url.parse(redirectUrl).pathname;
 
+          var urlparts   = url.parse(redirectUrl);
+          var searchname = urlparts.search;
+
+          var proto           = urlparts.protocol.substr(0, urlparts.protocol.length - 1);
+          var port            = urlparts.port;
           var redirectOptions = options;
-          redirectOptions.reqUrl = redirectUrl;
-          redirectOptions.hostname = hostname;
-          redirectOptions.path = pathname;
+
+          if (proto === 'https' && port === '80') {
+            urlparts.port = '443';
+            urlparts.host = urlparts.host.substr(0, urlparts.host.length - 3) + ':443';
+            urlparts.href = urlparts.protocol + '//' + urlparts.host + urlparts.pathname;
+            redirectOptions.headers['Host'] = urlparts.host;
+          }
+
+
+          redirectOptions.reqUrl   = url.format(urlparts);
+          redirectOptions.hostname = urlparts.hostname;
+          redirectOptions.path     = urlparts.pathname;
+          redirectOptions.port     = urlparts.port;
           if (searchname) redirectOptions.path += searchname;
 
+
           var out = module.exports[proto].get(redirectOptions, redirectCallback(reqUrl, redirect), redirect);
+
 
           // bubble errors that occur on the redirect back up to the initiating client request
           // object, otherwise they wind up killing the process.
