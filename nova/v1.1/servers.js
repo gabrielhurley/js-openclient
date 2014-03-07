@@ -224,6 +224,9 @@ var ServerManager = base.Manager.extend({
     } else {
       var client = this.client;
       return client.floating_ips.all({
+
+        endpoint_type: params.endpoint_type,
+
         success: function (ips) {
           var associated;
 
