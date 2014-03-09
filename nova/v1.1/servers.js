@@ -182,6 +182,7 @@ var ServerManager = base.Manager.extend({
     } else {
       var client = this.client;
       return client.floating_ips.all({
+        endpoint_type: params.endpoint_type,
         success: function (ips) {
           var available;
 
@@ -193,7 +194,9 @@ var ServerManager = base.Manager.extend({
           if (available) {
             return finish(available);
           } else {
+console.log('TODO: pool id in nova/v1.1/servers.js on line 197');
             client.floating_ips.create({
+              endpoint_type: params.endpoint_type,
               success: function (ip) {
                 return finish(ip.ip);
               },
