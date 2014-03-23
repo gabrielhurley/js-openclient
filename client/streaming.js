@@ -78,7 +78,8 @@ StreamingUpload.prototype._endTransfer = function () {
 
 StreamingUpload.prototype.write = function (data, callback) {
   this.callback = callback;
-  var written = this.request.write(new Buffer(data.chunk, 'base64'), 'binary');
+  var chunk = data.chunk instanceof Buffer ? data.chunk : new Buffer(data.chunk, 'base64');
+  var written = this.request.write(chunk, 'binary');
   if (written) {
     this._continueTransfer(data);
   } else {
