@@ -44,13 +44,16 @@ var ObjectManager = base.Manager.extend({
     var request = http.request(options, function (response) {
       if (response.statusCode === 0 || response.statusCode >= 400) callback(response, null, {status: response.statusCode});
 
-      var response_headers = ["Content-Length", "Content-Type", "Content-Encoding", "Last-Modified", "ETag"];
-      response_headers.forEach(function (header) {
-        if (response.headers[header.toLowerCase()]) {
-          params.pipe.setHeader(header, response.headers[header.toLowerCase()]);
-        }
-      });
-      params.pipe.setHeader("Content-Disposition", 'attachment; filename="' + params.id + '"');
+      if (params.pipe.setHeader) {
+        var response_headers = ["Content-Length", "Content-Type", "Content-Encoding", "Last-Modified", "ETag"];
+        response_headers.forEach(function (header) {
+          if (response.headers[header.toLowerCase()]) {
+            params.pipe.setHeader(header, response.headers[header.toLowerCase()]);
+          }
+        });
+        params.pipe.setHeader("Content-Disposition", 'attachment; filename="' + params.id + '"');
+      }
+
       response.pipe(params.pipe);
 
       // TODO: Use standard response logging method here.
