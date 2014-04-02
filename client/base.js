@@ -43,6 +43,7 @@ var Client = Class.extend({
     options = options || {};
     this.user_agent = options.user_agent || "js-openclient";
     this.debug = options.debug || false;
+	this.enforce_https = options.enforce_https === true;
     this.log_level = this.debug ? "debug" : (options.log_level || "warning");
     this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
     this.truncate_long_response = options.truncate_long_response || true; // Set default truncation to truncate...
@@ -246,6 +247,19 @@ var Client = Class.extend({
 
     if (this.url_rewrite) {
       url = url.replace(this.url_rewrite[0], this.url_rewrite[1]);
+    }
+
+    if (this.enforce_https) {
+
+      if (url.substr(0, 5) === 'http:') {
+
+        url = 'https:' + url.substr(5);
+
+        if (url.indexOf(':80/') !== -1) {
+          url = url.replace(/\:80\//, ':443/');
+        }
+      }
+
     }
 
     xhr.open(params.method, url, true);
