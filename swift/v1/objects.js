@@ -1,4 +1,5 @@
-var http = require('http');
+var http = require('http'),
+    https = require('https');
 
 var base = require("../../client/base"),
     error = require("../../client/error");
@@ -26,12 +27,22 @@ var ObjectManager = base.Manager.extend({
       callback("Unable to download object.", null, {status: 500});
     }
 
-    var matches = params.url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i),
-        host_and_port = matches[1].split(':');
+    var matches = params.url.match(/^(https?)\:\/\/([^\/?#]+)(?:[\/?#]|$)/i),
+        host_and_port = matches[2].split(':'),
+        request_module, request_default_port;
+
+    if (matches[1] === 'https') {
+      request_module = https;
+      request_default_port = 443;
+    }
+    else {
+      request_module = http;
+      request_default_port = 80;
+    }
 
     var options = {
       hostname: host_and_port[0],
-      port: host_and_port[1],
+      port: host_and_port[1] || request_default_port,
       path: '/' + params.url.substring(matches[0].length),
       method: params.method,
       headers: {
@@ -41,7 +52,7 @@ var ObjectManager = base.Manager.extend({
 
     var response_data = "";
 
-    var request = http.request(options, function (response) {
+    var request = request_module.request(options, function (response) {
       if (response.statusCode === 0 || response.statusCode >= 400) callback(response, null, {status: response.statusCode});
 
       if (params.pipe.setHeader) {
