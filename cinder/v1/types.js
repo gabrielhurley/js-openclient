@@ -66,8 +66,6 @@ var TypeManager = base.Manager.extend({
 
   get: function (params) { throw new error.NotImplemented(); },
 
-  delete: function (params) { throw new error.NotImplemented(); },
-
   update: function (params) { throw new error.NotImplemented(); }
 
 });
