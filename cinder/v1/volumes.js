@@ -20,6 +20,19 @@ var VolumeManager = base.Manager.extend({
     return this._super(params, callback);
   },
 
+  del: function (params, callback) {
+    // Allows smart selection of delete vs. force_delete if the volume status
+    // is passed in as part of params.data.
+    if (params.data && params.data.status) {
+      var status = params.data.status.toLowerCase();
+      delete params.data.status;
+      if (status !== "available" && status !== "error") {
+        return this.force_del(params, callback);
+      }
+    }
+    return this._super(params, callback);
+  },
+
   _action: function (params, action, info, callback) {
     var url = urljoin(this.get_base_url(params), params.id || params.data.id, "action");
     if (params.data && params.data.id) delete params.data.id;
@@ -27,6 +40,8 @@ var VolumeManager = base.Manager.extend({
     params.data[action] = info || null;
     return this.client.post(params, callback);
   },
+
+  force_del: function (params, callback) { return this._action(params, "os-force_delete", null, callback); },
 
   attach: function (params, callback) {
     // NOTE: THIS DOES NOT MIRROR PYTHON-CINDERCLIENT'S ATTACH METHOD.
