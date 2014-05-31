@@ -37,6 +37,17 @@ var ServerManager = base.Manager.extend({
       delete params.data.scheduler_hints;
     }
 
+    if (params.data.networks) {
+      params.data.nics = [];
+      if (Object.prototype.toString.call(params.data.networks) !== '[object Array]') {
+        params.data.networks = [params.data.networks];
+      }
+      params.data.networks.forEach(function (network) {
+        params.data.nics.push({"net-id": network, "v4-fixed-ip": ""});
+      });
+      delete params.data.networks;
+    }
+
     // Base64 encode user data if present
     if (params.data.user_data) {
       // Use Buffer built-in if in Node, otherwise use btoa in the browser
