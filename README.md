@@ -33,7 +33,7 @@ fundamental API contract that this library provides.
 The following shows off a variety of the features of the client:
 
 ```javascript
-var Keystone = require("openclient").Keystone;
+var Keystone = require("openclient").getAPI('openstack', 'identity', '2.0');
 
 var client = new Keystone({
   url: <auth url>,
