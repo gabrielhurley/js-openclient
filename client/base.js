@@ -202,10 +202,12 @@ var Client = Class.extend({
       try {
         api_error = JSON.parse(response_text);
         if (api_error.hasOwnProperty('error')) api_error = api_error.error;
-        // NOTE: The following are for stupid Cinder errors.
-        if (api_error.hasOwnProperty('badRequest')) api_error = api_error.badRequest;
-        if (api_error.hasOwnProperty('overLimit')) api_error = api_error.overLimit;
-        if (api_error.hasOwnProperty('forbidden')) api_error = api_error.forbidden;
+        // Fix for the way OpenStack services wrap their error objects in arbitrary keys.
+        for (var key in api_error) {
+          if (api_error.hasOwnProperty(key) && api_error[key].message && api_error[key].code) {
+            api_error = api_error[key];
+          }
+        }
         message = api_error.message;
       }
       catch (problem) {
