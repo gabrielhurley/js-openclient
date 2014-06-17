@@ -1,5 +1,6 @@
 var crypto = require('crypto'),
     http = require('http'),
+    https = require('https'),
     URL = require('url');
 
 var async = require("async");
@@ -639,12 +640,22 @@ var Manager = Class.extend({
   _openBinaryStream: function (params, headers, token, callback) {
     var client = this.client;
 
-    var matches = params.url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i),
-        host_and_port = matches[1].split(':');
+    var matches = params.url.match(/^(https?)\:\/\/([^\/?#]+)(?:[\/?#]|$)/i),
+        host_and_port = matches[2].split(':'),
+        request_module, request_default_port;
+
+    if (matches[1] === 'https') {
+      request_module = https;
+      request_default_port = 443;
+    }
+    else {
+      request_module = http;
+      request_default_port = 80;
+    }
 
     var options = {
       hostname: host_and_port[0],
-      port: host_and_port[1],
+      port: host_and_port[1] || request_default_port,
       path: '/' + params.url.substring(matches[0].length),
       method: params.method,
       headers: {
@@ -660,7 +671,7 @@ var Manager = Class.extend({
     }
 
     // For our initial connection, simply indicate that the socket is ready.
-    var request = http.request(options).on('socket', function (socket) {
+    var request = request_module.request(options).on('socket', function (socket) {
       callback();
     });
 
