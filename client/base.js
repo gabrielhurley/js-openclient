@@ -481,7 +481,9 @@ var Manager = Class.extend({
   // Fetches the appropriate service endpoint from the service catalog.
   get_base_url: function (params) {
     var base = this.client.url_for(params.endpoint_type || this.endpoint_type);
-    if (!base) this.client.url_for(params.endpoint_type_backup || this.endpoint_type_backup);
+    if (!base) {
+        base = this.client.url_for(params.endpoint_type_backup || this.endpoint_type_backup);
+    }
     return urljoin(base, this.prepare_namespace(params));
   },
 
