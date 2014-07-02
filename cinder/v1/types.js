@@ -11,9 +11,9 @@ var TypeManager = base.Manager.extend({
       var changed_types = [];
 
       types.forEach(function (type) {
-        if (type.extra_specs && type.extra_specs.custom_user_description) {
-          type.description = type.extra_specs.custom_user_description;
-          delete type.extra_specs.custom_user_description;
+        if (type.extra_specs && type.extra_specs['custom:description']) {
+          type.description = type.extra_specs['custom:description'];
+          delete type.extra_specs['custom:description'];
         }
 
         changed_types.push(type);
@@ -30,7 +30,7 @@ var TypeManager = base.Manager.extend({
         openstack_params = {
           name: params.data.name,
           extra_specs: {
-            'custom_user_description': params.data.description
+            'custom:description': params.data.description
           }
         },
         iteration;
