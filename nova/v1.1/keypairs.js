@@ -7,6 +7,14 @@ var KeypairManager = base.Manager.extend({
   plural: "keypairs",
   singular: "keypair",
 
+  get: function (params, callback) {
+    params.parseResult = function (result) {
+      result.id = result.name;
+      return result;
+    };
+    return this._super(params, callback);
+  },
+
   // Keypairs don't return their ID via the API, so we use the name instead.
   all: function (params, callback) {
     var manager = this;
@@ -23,6 +31,7 @@ var KeypairManager = base.Manager.extend({
     };
     return this._super(params, callback);
   },
+
   create: function (params, callback) {
     params.parseResult = function (result) {
       result.id = result.name;
@@ -31,8 +40,15 @@ var KeypairManager = base.Manager.extend({
     return this._super(params, callback);
   },
 
-  get: function (params) { throw new error.NotImplemented(); },
-  update: function (params) { throw new error.NotImplemented(); }
+  update: function (params, callback) { throw new error.NotImplemented(); },
+
+  _rpc_to_api: function (rpc) {
+    var api = {};
+    api.name = rpc.key_name;
+    api.user_id = rpc.user_id;
+    api.tenant_id = rpc.tenant_id;
+    return api;
+  }
 });
 
 

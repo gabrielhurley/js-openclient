@@ -139,25 +139,25 @@ var Client = Class.extend({
       client.log_request("error", method, url, req_headers, data);
     }
 
-    // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
-    var truncate_at = client.truncate_response_at === -1 ? (params.truncate_at || client.truncate_response_at) : client.truncate_response_at;
+    if (typeof response_text === "string") {
+      // If not set, check for a param truncation but fallback to -1, otherwise respect the user-defined global truncation.
+      var truncate_at = client.truncate_response_at === -1 ? (params.truncate_at || client.truncate_response_at) : client.truncate_response_at;
 
-    if (
-      client.truncate_long_response &&
-      truncate_at >= 0 &&
-      response_text.length >= client.truncate_response_at
-    ) {
-      response_text = response_text.substring(0, truncate_at) + "... (truncated)";
+      if (
+        client.truncate_long_response &&
+        truncate_at >= 0 &&
+        response_text.length >= client.truncate_response_at
+      ) {
+        response_text = response_text.substring(0, truncate_at) + "... (truncated)";
+      }
+
+      if (status === 0) {
+        response_text = "<REQUEST ABORTED>";
+      }
+
+      client.log_response((status === 0 || status >= 400) ? "error" : "info",
+                          method, url, status, resp_headers, response_text);
     }
-
-    if (status === 0) {
-      response_text = "<REQUEST ABORTED>";
-    }
-
-
-    client.log_response((status === 0 || status >= 400) ? "error" : "info",
-                        method, url, status, resp_headers, response_text);
-
 
     // Response handling.
     // Ignore informational codes for now (1xx).
@@ -168,10 +168,14 @@ var Client = Class.extend({
       if (params.raw_result) {
         result = response_text;
       } else if (response_text) {
-        try {
-          result = JSON.parse(response_text);
-        } catch (e) {
-          client.log("error", "Invalid JSON response");
+        if (typeof response_text === "string") {
+          try {
+            result = JSON.parse(response_text);
+          } catch (e) {
+            client.log("error", "Invalid JSON response");
+          }
+        } else {
+          result = response_text;
         }
 
         if (result) {
@@ -231,6 +235,14 @@ var Client = Class.extend({
         data,
         headers,
         method;
+
+    // Short circuit if response data is already provided (such as from a push notification)
+    if (params.push_data) {
+      var response_data = {};
+      if (params.result_key) response_data[params.result_key] = params.push_data;
+      else response_data = params.push_data;
+      return client.process_response('AMQP', '', '', 200, response_data, '', '', params, end);
+    }
 
     // This is mainly necessary due to Glance needing the Content-Length
     // header set on PUT requests, but xmlhttprequest only setting it for POST.
@@ -470,6 +482,8 @@ var Manager = Class.extend({
     };
   },
 
+  _rpc_to_api: function (rpc) { return rpc; },  // No-op by default
+
   // Convenience function that attempts to take english plural forms and
   // make them singular by removing the "s". This function exists so that
   // most plural and singular resource names can be derived from that single
@@ -514,6 +528,10 @@ var Manager = Class.extend({
     // Allow false-y values for the result key.
     if (typeof(params.result_key) === "undefined") {
       params.result_key = params.result_key || this[plural_or_singular];
+    }
+
+    if (params.push_data) {
+      params.push_data = this._rpc_to_api(params.push_data);
     }
 
     // Ensure that we only wrap the data object if data is present and

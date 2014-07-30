@@ -137,7 +137,11 @@ var UserManager = base.Manager.extend({
     return this.client.put(params, callback);
   },
   enable: function (params, callback) { return this._updateEnabled(true, params, callback); },
-  disable: function (params, callback) { return this._updateEnabled(false, params, callback); }
+  disable: function (params, callback) { return this._updateEnabled(false, params, callback); },
+
+  _rpc_to_api: function (rpc) {
+    return {id: rpc.resource_info};
+  }
 });
 
 

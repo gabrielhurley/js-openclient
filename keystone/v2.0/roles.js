@@ -5,7 +5,10 @@ var base = require("../../client/base"),
 var RoleManager = base.Manager.extend({
   namespace: "OS-KSADM/roles",
   plural: "roles",
-  update: function (params) { throw new error.NotImplemented(); }
+  update: function (params) { throw new error.NotImplemented(); },
+  _rpc_to_api: function (rpc) {
+    return {id: rpc.resource_info};
+  }
 });
 
 

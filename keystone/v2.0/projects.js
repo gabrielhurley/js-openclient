@@ -31,6 +31,10 @@ var ProjectManager = base.Manager.extend({
       return result;
     };
     return this.update(params, callback);
+  },
+
+  _rpc_to_api: function (rpc) {
+    return {id: rpc.resource_info};
   }
 
 });

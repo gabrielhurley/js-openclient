@@ -119,6 +119,20 @@ var VolumeManager = base.Manager.extend({
         error: params.error
       }, callback);
     }
+  },
+
+  _rpc_to_api: function (rpc) {
+    // Utility method to convert an RPC "notification"-style object into one
+    // which resembles data returned by the API for compatibility purposes.
+    var api = {};
+    api.id = rpc.volume_id;
+    api.display_name = rpc.display_name;
+    api.created_at = rpc.created_at.replace(/\s/g, '').replace(/(\d{4})-(\d{2})-(\d{2})([\d:]+)+.*/, "$1-$2-$3T$4Z");
+    api.size = rpc.size;
+    api.snapshot_id = rpc.snapshot_id;
+    api.status = rpc.status;
+    api["os-vol-tenant-attr:tenant_id"] = rpc.tenant_id;
+    return api;
   }
 
 });

@@ -64,8 +64,6 @@ var TypeManager = base.Manager.extend({
     return this._super(params, callback);
   },
 
-  get: function (params) { throw new error.NotImplemented(); },
-
   update: function (params) { throw new error.NotImplemented(); }
 
 });

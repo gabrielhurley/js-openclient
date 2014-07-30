@@ -67,6 +67,14 @@ var FloatingIPManager = base.Manager.extend({
     };
 
     new FloatingIPBulkManager(this.client).all(params, callback);
+  },
+
+  _rpc_to_api: function (rpc) {
+    // DO NOT USE, this notification is incomplete.
+    var api = {};
+    //api.id = // OH YEAH, THEY FORGOT TO SEND THE ID.
+    api.ip = rpc.floating_ip;
+    return rpc;
   }
 });
 

@@ -258,7 +258,7 @@ var ServerManager = base.Manager.extend({
         }
       });
     }
-  }
+  },
 
   // TODO: Methods implemented by python-novaclient which are not yet implemented here...
   // add_fixed_ip
@@ -276,6 +276,39 @@ var ServerManager = base.Manager.extend({
   // change_password
   // diagnostics
   // actions
+
+  _rpc_to_api: function (rpc) {
+    // Utility method to convert an RPC "notification"-style object into one
+    // which resembles data returned by the API for compatibility purposes.
+    var api = {};
+    api.id = rpc.instance_id;
+    api.name = rpc.display_name;
+    api.user_id = rpc.user_id;
+    api.tenant_id = rpc.tenant_id;
+    api.status = rpc.state.toUpperCase();
+    api["OS-EXT-STS:task_state"] = (rpc.state_description ? rpc.state_description : null);
+    api["OS-EXT-STS:vm_state"] = (rpc.state ? rpc.state : null);
+    //api["OS-EXT-AZ:availability_zone"] = rpc.availability_zone;  // Not sure this can be trusted.
+    api.created = rpc.created_at.replace(/\s/g, '').replace(/(\d{4})-(\d{2})-(\d{2})([\d:]+)+.*/, "$1-$2-$3T$4Z");
+    api.accessIPv4 = rpc.access_ip_v4;
+    api.accessIPv6 = rpc.access_ip_v6;
+    api.metadata = rpc.metadata;
+    api.flavor = {id: rpc.instance_flavor_id};
+    api.image = {id: rpc.image_meta.base_image_ref};
+    if (rpc.fixed_ips) {
+      api.addresses = {};
+      rpc.fixed_ips.forEach(function (ip) {
+        if (!api.addresses[ip.label]) api.addresses[ip.label] = [];
+        api.addresses[ip.label].push({
+          version: ip.version,
+          addr: ip.address,
+          "OS-EXT-IPS:type": ip.type
+        });
+        // ip.floating_ips.forEach(function (floating) {});  // Can't get a notification show up when this is populated...
+      });
+    }
+    return api;
+  }
 });
 
 
