@@ -14,8 +14,34 @@ var ServerManager = base.Manager.extend({
     return base_url;
   },
 
+  get: function (params, callback) {
+    // get_addresses_for_instance also uses this method, so let's not
+    // clobber our parsing functions.
+    if (!params.parseResult) {
+      params.parseResult = function (result) {
+        Object.keys(result.addresses).forEach(function (network_name) {
+          result.addresses[network_name].forEach(function (address) {
+            address.network = network_name;
+          });
+        });
+        return result;
+      };
+    }
+    return this._super(params, callback);
+  },
+
   all: function (params, callback) {
     if (typeof params.detail === "undefined") params.detail = true;
+    params.parseResult = function (results) {
+      results.forEach(function (item) {
+        Object.keys(item.addresses).forEach(function (network_name) {
+          item.addresses[network_name].forEach(function (address) {
+            address.network = network_name;
+          });
+        });
+      });
+      return results;
+    };
     return this._super(params, callback);
   },
 
@@ -38,14 +64,14 @@ var ServerManager = base.Manager.extend({
     }
 
     if (params.data.networks) {
-      params.data.nics = [];
-      if (Object.prototype.toString.call(params.data.networks) !== '[object Array]') {
+      var networks = [];
+      if (!Array.isArray(params.data.networks)) {
         params.data.networks = [params.data.networks];
       }
-      params.data.networks.forEach(function (network) {
-        params.data.nics.push({"net-id": network, "v4-fixed-ip": ""});
+      params.data.networks.forEach(function (network_id) {
+        networks.push({"uuid": network_id});
       });
-      delete params.data.networks;
+      params.data.networks = networks;
     }
 
     // Base64 encode user data if present
@@ -179,12 +205,33 @@ var ServerManager = base.Manager.extend({
     return this._action(params, "os-getConsoleOutput", {length: params.data.length || 100}, callback);
   },
 
+  get_addresses_for_instance: function (params, callback) {
+    // Convenience method for returning all the addresses associated with
+    // the specific instance in a flattened list-friendly format. Useful for
+    // making selects for floating IP management, etc.
+    params.parseResult = function (result) {
+      var addresses = [];
+      Object.keys(result.addresses).forEach(function (network_name) {
+        result.addresses[network_name].forEach(function (address) {
+          address.id = address.addr;
+          address.network = network_name;
+          addresses.push(address);
+        });
+      });
+      return addresses;
+    };
+    this.get(params, callback);
+  },
+
   add_floating_ip: function (params, callback) {
-    var manager = this;
+    var manager = this,
+        fixed_address = params.data.fixed_address;
 
     function finish(address) {
       delete params.data;
-      return manager._action(params, 'addFloatingIp', {'address': address}, callback);
+      var data = {'address': address};
+      if (fixed_address) data.fixed_address = fixed_address;
+      return manager._action(params, 'addFloatingIp', data, callback);
     }
 
     params.id = params.id || params.data.id;
