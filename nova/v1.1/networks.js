@@ -8,7 +8,7 @@ var NetworkManager = base.Manager.extend({
 
   create: function (params, callback) {
     // Nova will choke with an error trying to parse an int if MTU is sent
-    // but anything other than an integer or null;
+    // but anything other than an integer or null.
     if (!params.data.mtu) params.data.mtu = null;
     // share_address and enable_dhcp generally have the same value for common
     // network configurations, so for shorthand we can set enable_dhcp from
@@ -17,19 +17,6 @@ var NetworkManager = base.Manager.extend({
       params.data.enable_dhcp = params.data.share_address;
     }
     return this._super(params, callback);
-  },
-
-  del: function (params, callback) {
-    var manager = this,
-        id = params.id || params.data.id;
-    params.url = this.urljoin(this.get_base_url(params), id);
-    // Always try to disassociate first; it's slightly inefficient, but it
-    // ensures that delete won't fail because you forgot to do the disassocation
-    // manually. This doesn't seem like a place where two steps are necessary.
-    return this.disassociate({id: id}, function (err, result, xhr) {
-      if (err) return manager.safe_complete(err, null, xhr, params, callback);
-      manager.client.del(params, callback);
-    });
   },
 
   disassociate: function (params, callback) {
