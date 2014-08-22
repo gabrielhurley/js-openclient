@@ -76,8 +76,9 @@ var FloatingIPManager = base.Manager.extend({
       if (err) return manager.safe_complete(err, null, xhr, params, callback);
       var new_params = {
         id: params.data.instance_id,
-        data: { address: params.data.address }
+        data: { address: ip.ip }
       };
+      if (params.data.fixed_address) new_params.data.fixed_address = params.data.fixed_address;
       client.servers.add_floating_ip(new_params, function (err, data, xhr) {
         if (err) return manager.safe_complete(err, null, xhr, params, callback);
         manager.safe_complete(null, ip, {status: 202}, params, callback);
