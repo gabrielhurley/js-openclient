@@ -28,7 +28,9 @@
         "beforeEach",
         "waits",
         "waitsFor",
-        "runs"
+        "runs",
+        "module",
+        "require"
     ],
 
     // Development.
