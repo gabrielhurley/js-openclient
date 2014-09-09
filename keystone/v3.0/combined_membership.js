@@ -9,7 +9,7 @@ var assignablesHelper = new AssignablesHelper();
 
 /**
  * Manager-alike which delegates between a {UserProjectMembershipManager} and a {GroupProjectMembershipManager}, based
- * on the provided `assignable_type`.
+ * on the provided `type`.
  * @type {ProjectMembershipManager}
  */
 var ProjectMembershipManager = Class.extend({
@@ -47,26 +47,26 @@ var ProjectMembershipManager = Class.extend({
 
 
   get: function(params, callback) {
-    var assignable_type = params.data.assignable_type;
-    if (assignable_type === "user") {
+    var type = params.data.type;
+    if (type === "user") {
       this._user_project_memberships.get(params, callback);
-    } else if (assignable_type === "group") {
+    } else if (type === "group") {
       this._group_project_memberships.get(params, callback);
     } else {
-      var err = new Error("Invalid assignable_type");
+      var err = new Error("Invalid type");
       this.safe_complete(err, null, null, params, callback);
     }
   },
 
 
   create: function(params, callback) {
-    var assignable_type = params.data.assignable_type;
-    if (assignable_type === "user") {
+    var type = params.data.type;
+    if (type === "user") {
       this._user_project_memberships.create(params, callback);
-    } else if (assignable_type === "group") {
+    } else if (type === "group") {
       this._group_project_memberships.create(params, callback);
     } else {
-      var err = new Error("Invalid assignable_type");
+      var err = new Error("Invalid type");
       this.safe_complete(err, null, null, params, callback);
     }
   },
@@ -74,36 +74,36 @@ var ProjectMembershipManager = Class.extend({
   createWithDisambiguatedId: function(params, callback) {
     var disambiguated_id = params.data.disambiguated_id,
         assignable_info = assignablesHelper.parseDisambiguatedId(disambiguated_id),
-        assignable_type = assignable_info.assignable_type;
+        type = assignable_info.type;
 
     delete params.data.disambiguated_id;
-    params.data[assignable_type] = assignable_info.id;
-    params.data.assignable_type = assignable_type;
+    params.data[type] = assignable_info.id;
+    params.data.type = type;
     return this.create(params, callback);
   },
 
 
   del: function(params, callback) {
-    var assignable_type = params.data.assignable_type;
-    if (assignable_type === "user") {
+    var type = params.data.type;
+    if (type === "user") {
       this._user_project_memberships.del(params, callback);
-    } else if (assignable_type === "group") {
+    } else if (type === "group") {
       this._group_project_memberships.del(params, callback);
     } else {
-      var err = new Error("Invalid assignable_type");
+      var err = new Error("Invalid type");
       this.safe_complete(err, null, null, params, callback);
     }
   },
 
 
   update: function(params, callback) {
-    var assignable_type = params.data.assignable_type;
-    if (assignable_type === "user") {
+    var type = params.data.type;
+    if (type === "user") {
       this._user_project_memberships.update(params, callback);
-    } else if (assignable_type === "group") {
+    } else if (type === "group") {
       this._group_project_memberships.update(params, callback);
     } else {
-      var err = new Error("Invalid assignable_type");
+      var err = new Error("Invalid type");
       this.safe_complete(err, null, null, params, callback);
     }
   },

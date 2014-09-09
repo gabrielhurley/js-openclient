@@ -152,7 +152,7 @@ var UserProjectMembershipManager = Class.extend({
           email: user.email,
           roles: roles,
           enabled: user.enabled,
-          assignableType: "user",
+          type: "user",
           _backingObj: user
         });
       });

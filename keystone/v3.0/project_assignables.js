@@ -9,7 +9,7 @@ var assignablesHelper = new AssignablesHelper();
 
 /**
  * An Assignable is anything that can be given a role assignment. Currently, we support Group and User as Project
- * Assignables. An assignable is its original type decorated with `assignable_type` and `disambiguated_id` attributes.
+ * Assignables. An assignable is its original type decorated with `type` and `disambiguated_id` attributes.
  *
  * @type {ProjectAssignableManager}
  */
@@ -41,13 +41,13 @@ var ProjectAssignableManager = Class.extend({
       }
 
       _.each(results.users[0], function(user) {
-        user.assignable_type = "user";
-        user.disambiguated_id = assignablesHelper.disambiguatedId(user.assignable_type, user.id);
+        user.type = "user";
+        user.disambiguated_id = assignablesHelper.disambiguatedId(user.type, user.id);
       });
 
       _.each(results.groups[0], function(group) {
-        group.assignable_type = "group";
-        group.disambiguated_id = assignablesHelper.disambiguatedId(group.assignable_type, group.id);
+        group.type = "group";
+        group.disambiguated_id = assignablesHelper.disambiguatedId(group.type, group.id);
       });
 
       this.safe_complete(null, results.users[0].concat(results.groups[0]), { status: 200 }, params, callback);

@@ -161,7 +161,7 @@ var ProjectGroupMembershipManager = Class.extend({
           id: groupSpec.id,
           name: group.name,
           roles: roles,
-          assignable_type: "group",
+          type: "group",
           _backingObj: group
         });
       });
