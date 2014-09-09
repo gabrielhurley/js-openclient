@@ -40,6 +40,14 @@ var Client = Class.extend({
   // in a NodeJS environment, not in a browser.
   is_browser: io._native,
 
+  // Override `version_overrides` to force a rewrite of the service catalog URLs. For example,
+  // to rewrite "v2.0" to "v3" for the "identity" service, you'd specify:
+  //    version_overrides: {
+  //      identity: [["v2.0", "v3"]]
+  //    }
+  //
+  version_overrides: {},
+
   init: function (options) {
     options = options || {};
     this.user_agent = options.user_agent || "js-openclient";
@@ -105,10 +113,24 @@ var Client = Class.extend({
 
   // Fetches a URL for the current service type with the given endpoint type.
   url_for: function (endpoint_type, service_type) {
-    var search_service_type = service_type || this.service_type;
+    var search_service_type = service_type || this.service_type,
+        overrides = this.version_overrides[search_service_type];
+
     for (var i = 0; i < this.service_catalog.length; i++) {
       if (this.service_catalog[i].type === search_service_type) {
-        return this.service_catalog[i].endpoints[0][endpoint_type];
+
+        var url = this.service_catalog[i].endpoints[0][endpoint_type];
+
+        if (overrides) {
+          overrides.forEach(function(override) {
+              var from = override[0],
+                  to   = override[1];
+
+              url = url.replace(from, to);
+          });
+        }
+
+       return url;
       }
     }
     if (service_type) {  // If we came up empty for a specific search, return null.
@@ -147,7 +169,7 @@ var Client = Class.extend({
         client.truncate_long_response &&
         truncate_at >= 0 &&
         response_text.length >= client.truncate_response_at
-      ) {
+        ) {
         response_text = response_text.substring(0, truncate_at) + "... (truncated)";
       }
 
@@ -444,6 +466,7 @@ var Client = Class.extend({
     this.post({
       url: urljoin(this.url, "/tokens"),
       data: credentials,
+      allow_insecure_cert: params.allow_insecure_cert,
       result_key: "access",
       success: authenticated,
       error: function (err, xhr) {
@@ -499,7 +522,7 @@ var Manager = Class.extend({
   get_base_url: function (params) {
     var base = this.client.url_for(params.endpoint_type || this.endpoint_type);
     if (!base) {
-        base = this.client.url_for(params.endpoint_type_backup || this.endpoint_type_backup);
+      base = this.client.url_for(params.endpoint_type_backup || this.endpoint_type_backup);
     }
     return urljoin(base, this.prepare_namespace(params));
   },
