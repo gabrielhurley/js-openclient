@@ -26,54 +26,11 @@ var TypeManager = base.Manager.extend({
   },
 
   create: function (params, callback) {
-    var key_value_pairs = {},
-        openstack_params = {
-          name:         params.data.name,
-          extra_specs:  {}
-        },
-        iteration;
-
     // Set the custom description only if there is one (zeros count here...)
-    if (params.data.description === 0 || params.data.description) {
-      openstack_params.extra_specs['custom:description'] = params.data.description;
+    if (params.data.description || params.data.description === 0) {
+      params.data.extra_specs['custom:description'] = params.data.description;
+      delete params.data.description;
     }
-
-    for (iteration in params.data) {
-      if (params.data.hasOwnProperty(iteration) && (iteration.indexOf('extra_specs') >= 0)) {
-        var match_array           = iteration.match(/extra_specs\[(\d+)\]/),
-            index_number,
-            attribute_match_array,
-            attribute;
-
-        if (match_array) {
-          index_number          = match_array[(match_array.length - 1)];
-          attribute_match_array = iteration.match(/extra_specs\[\d+\]\[(.+)\]/);
-
-          if (!key_value_pairs.hasOwnProperty(index_number)) {
-            key_value_pairs[index_number] = {};
-          }
-
-          if (attribute_match_array) {
-            attribute = attribute_match_array[(attribute_match_array.length - 1)];
-
-            key_value_pairs[index_number][attribute] = params.data[iteration];
-          }
-        }
-      }
-    }
-
-    for (iteration in key_value_pairs) {
-      if (key_value_pairs.hasOwnProperty(iteration)) {
-        var kv_pair = key_value_pairs[iteration];
-
-        // Add the values to extra_specs if it has a key and a value...
-        if (!!kv_pair['key'] && !!kv_pair['value']) {
-          openstack_params.extra_specs[kv_pair['key']] = kv_pair['value'];
-        }
-      }
-    }
-
-    params.data = openstack_params; // Reassign the formatted data to our params.
 
     return this._super(params, callback);
   },
