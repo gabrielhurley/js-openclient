@@ -320,7 +320,7 @@ var Client = Class.extend({
         return params.defer(result, function (e, r) {
           params.defer = null;
           result = r || result;
-          end(e);
+          end(e, result);
         });
       }
       if (err && params.error) {
