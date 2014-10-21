@@ -94,7 +94,7 @@ var Client = Class.extend({
 
   redact: function (json_string, redacted) {
     for (var i = 0; i < redacted.length; i++) {
-      var re = new RegExp('("' + redacted[i] + '":\\s?)"(([^\\"]|\\\\|\\")*)"', "g");
+      var re = new RegExp('("' + redacted[i] + '":\\s?)"(([^\\"]|\\\\|\\")*?)"', "g");
       json_string = json_string.replace(re, '$1"*****"');
     }
     return json_string;
