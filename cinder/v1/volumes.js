@@ -43,6 +43,9 @@ var VolumeManager = base.Manager.extend({
 
   force_del: function (params, callback) { return this._action(params, "os-force_delete", null, callback); },
 
+  set_available_status: function (params, callback) { return this._action(params, "os-reset_status", {status: "available"}, callback); },
+  set_error_status: function (params, callback) { return this._action(params, "os-reset_status", {status: "error"}, callback); },
+
   attach: function (params, callback) {
     // NOTE: THIS DOES NOT MIRROR PYTHON-CINDERCLIENT'S ATTACH METHOD.
     // Unlike python-cinderclient, this method *actually* attaches the
