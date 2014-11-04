@@ -2,7 +2,7 @@ var base = require("../../client/base"),
     error = require("../../client/error");
 
 
-function _image_meta_to_headers(data) {
+function _image_meta_to_headers(data, purge_props) {
   var headers = {},
       non_meta_props = ['name', 'is_public', 'disk_format', 'container_format', 'protected'];
 
@@ -23,7 +23,7 @@ function _image_meta_to_headers(data) {
     headers['x-image-meta-property-' + key] = "" + data.properties[key];
   });
 
-  headers['x-glance-registry-purge-props'] = "false";
+  headers['x-glance-registry-purge-props'] = (purge_props ? 'true' : 'false');
 
   return headers;
 }
@@ -93,8 +93,10 @@ var ImageManager = base.Manager.extend({
   },
 
   update: function (params, callback) {
+    var purge_props = params.data.purge_props;
+    delete params.data.purge_props;
     params.id = params.id || params.data.id;
-    params.headers = _image_meta_to_headers(params.data);
+    params.headers = _image_meta_to_headers(params.data, purge_props);
     params.allow_headers = true;
     params.headers['Content-Type'] = 'application/octet-stream';
     params.headers['Content-Length'] = 0;
