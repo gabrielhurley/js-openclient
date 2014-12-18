@@ -5,13 +5,14 @@ var crypto = require('crypto'),
 
 var async = require("async");
 
-var Class = require("./inheritance").Class,
-    color = require("./color"),
-    error = require("./error"),
-    is_ans1_token = require("./utils").is_ans1_token,
+var Class =           require("./inheritance").Class,
+    color =           require("./color"),
+    error =           require("./error"),
+    is_ans1_token =   require("./utils").is_ans1_token,
     StreamingUpload = require("./streaming").StreamingUpload,
-    urljoin = require("./utils").urljoin,
-    io = require("./io");
+    urljoin =         require("./utils").urljoin,
+    defaults =        require("./utils").defaults,
+    io =              require("./io");
 
 
 var XMLHttpRequest = io.XMLHttpRequest;
@@ -50,10 +51,10 @@ var Client = Class.extend({
 
   init: function (options) {
     options = options || {};
+    options = defaults({}, options, Client.global_init_options);
     this.user_agent = options.user_agent || "js-openclient";
     this.debug = options.debug || false;
-    this.log_level = this.debug ? "debug" : (options.log_level || "warning");
-    this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
+    this.log_level = this.debug ? "debug" : (options.log_level || "warn");
     this.truncate_long_response = options.truncate_long_response || true; // Set default truncation to truncate...
     this.truncate_response_at = options.truncate_response_at || -1; // but only based on specific truncation lengths in params.
     this.url = options.url;
@@ -65,6 +66,8 @@ var Client = Class.extend({
     // Allow URL rewrite hacks to bypass proxy issues.
     // The argument should be an array in the form of [<match>, <replacement>]
     this.url_rewrite = options.url_rewrite || false;
+
+    this._log_level = this.log_levels[this.log_level];  // Store the numeric version so we don't recalculate it every time.
   },
 
   log_levels: {
@@ -725,8 +728,15 @@ var Manager = Class.extend({
 
     // Return a StreamingUpload object so we can continue writing to it.
     return new StreamingUpload(this.client, request, params);
-  },
+  }
 });
+
+
+// These are set on the constructor rather than the prototype so they're unique to this "class"
+Client.global_init_options = {
+  debug: false,
+  log_level: "warn"
+};
 
 exports.Client = Client;
 exports.Manager = Manager;

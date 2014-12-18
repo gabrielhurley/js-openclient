@@ -38,5 +38,26 @@ module.exports = {
     // Credit goes to Adam Young for figuring this out. See Keystone's
     // source code for the logic/math that proves it.
     return token.indexOf("MII") === 0 ? true : false;
+  },
+
+  /**
+   * For each `key`, `val` in each of `obj...`, set `target[key]` = `val` if `target[key]` is undefined
+   */
+  defaults: function(target /*, obj...*/) {
+    var args = Array.prototype.slice.call(arguments, 0),
+        current, key, val;
+
+    args.shift();
+    current = args.shift();
+    while(current) {
+      for (key in current) {
+        if (typeof target[key] === "undefined") {
+          target[key] = current[key];
+        }
+      }
+      current = args.shift();
+    }
+    return target;
   }
+
 };

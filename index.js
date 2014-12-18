@@ -1,11 +1,13 @@
 var base = require("./client/base"),
-    error = require("./client/error");
+    error = require("./client/error"),
+    utils = require("./client/utils");
 
 var openclient = {
   // Base functional components.
   Client: base.Client,
   Manager: base.Manager,
   error: error,
+  utils: utils,
   api_map: {
     'openstack': {
       'identity': require('./keystone/versions'),
