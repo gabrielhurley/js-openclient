@@ -55,14 +55,15 @@ var FloatingIPManager = base.Manager.extend({
   },
 
   available: function (params, callback) {
-    params.parseResult = function (ips) {
+    var manager = this;
+    return this.all({}, function (err, ips, xhr) {
+      if (err) return manager.safe_complete(err, null, xhr, params, callback);
       var available = [];
       ips.forEach(function (ip) {
         if (!ip.instance_id) available.push(ip);
       });
-      return available;
-    };
-    return this.all(params, callback);
+      manager.safe_complete(err, available, xhr, params, callback);
+    });
   },
 
   add_to_instance: function (params, callback) {
