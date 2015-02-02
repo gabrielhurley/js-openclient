@@ -24,24 +24,36 @@ var ProjectMembershipManager = Class.extend({
 
 
   all: function(params, callback) {
-    this._role_assignments.all({
+    var new_params = {
       query: {
-       "scope.project.id": params.data.project
+        "scope.project.id": params.data.project
       }
-    }, _.bind(function(err, assignments) {
+    };
+
+    this._role_assignments.all(new_params, _.bind(function(err, assignments) {
       if (err) {
         this.safe_complete(err, null, null, params, callback);
         return;
       }
 
-      async.map(assignments, _.bind(this._convertAssignment, this, params.data.project), _.bind(function(err, results) {
-        if (err) {
-          this.safe_complete(err, null, null, params, callback);
-          return;
-        }
+      async.map(assignments,
+        // Iterator
+        _.bind(this._convertAssignment, this, params.data.project),
 
-        this.safe_complete(null, results, { status: 200 }, params, callback);
-      }, this));
+        // Callback
+        _.bind(function(err, results) {
+          // It's important that we still return a partial data set here even
+          // if some assignments couldn't be mapped correctly. That requires
+          // that _convertAssignment not return an error since async calls the
+          // callback as soon as the first error occurs in the iterator.
+          if (err) {
+            this.safe_complete(err, null, null, params, callback);
+            return;
+          }
+
+          this.safe_complete(null, results, { status: 200 }, params, callback);
+        }, this)
+      );
     }, this));
   },
 
@@ -109,10 +121,25 @@ var ProjectMembershipManager = Class.extend({
   },
 
   _convertAssignment: function(project, assignment, callback) {
+    // Ensure we don't return an error from this function unless we have
+    // something *completely* invalid like an unknown assignment type.
+    // Otherwise we want to return partial data since this function is used
+    // as an async iterator on aggregate data sets.
+    function membershipCallback(err, membership, xhr) {
+      if (err) {
+        membership = {
+          id: (assignment.user ? assignment.user.id : assignment.group.id),
+          enabled: null,
+          type: (assignment.user ? 'user' : 'group')
+        };
+      }
+      callback(null, membership);
+    }
+
     if (assignment.user) {
-      this._user_project_memberships._fetchUserMembership(project, assignment.user, callback);
+      this._user_project_memberships._fetchUserMembership(project, assignment.user, membershipCallback);
     } else if (assignment.group) {
-      this._group_project_memberships._fetchGroupMembership(project, assignment.group, callback);
+      this._group_project_memberships._fetchGroupMembership(project, assignment.group, membershipCallback);
     } else {
       callback(new Error("Unhandled assignment type"));
     }
