@@ -6,6 +6,16 @@ var StacksManager = base.Manager.extend({
   namespace: "stacks",
   use_raw_data: true,
 
+  get_base_url: function (params) {
+    var base_url = this._super(params);
+
+    if (params.id !== null && params.name != null) {
+      base_url = urljoin(base_url, params.name);
+    }
+
+    return base_url;
+  },
+
   create: function (params, callback) {
     var success = params.success,
         error = params.error,
