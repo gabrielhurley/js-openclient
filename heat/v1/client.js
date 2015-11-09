@@ -1,6 +1,7 @@
 var base = require("../../client/base"),
     ResourcesManager = require("./resources"),
-    StacksManager = require("./stacks");
+    StacksManager = require("./stacks"),
+    TemplatesManager = require("./templates");
 
 
 var Heat = base.Client.extend({
@@ -11,6 +12,7 @@ var Heat = base.Client.extend({
     this._super(options);
     this.resources = new ResourcesManager(this);
     this.stacks = new StacksManager(this);
+    this.templates = new TemplatesManager(this);
   }
 });
 
