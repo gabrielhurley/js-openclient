@@ -1,6 +1,5 @@
 var base = require("../../client/base"),
-    utils = require("../../client/utils"),
-    urljoin = require("../../client/utils").urljoin;
+    utils = require("../../client/utils");
 
 
 var TemplatesManager = base.Manager.extend({
@@ -16,7 +15,7 @@ var TemplatesManager = base.Manager.extend({
   },
 
   get: function (params, callback) {
-    var url = urljoin(this.get_base_url(params));
+    var url = this.get_base_url(params);
     params = this.prepare_params(params, url);
     this.client.get(params, callback);
   }
