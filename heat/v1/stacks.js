@@ -1,5 +1,6 @@
 var async = require('async'),
-    base = require("../../client/base");
+    base = require("../../client/base"),
+    urljoin = require("../../client/utils").urljoin;
 
 
 var StacksManager = base.Manager.extend({
