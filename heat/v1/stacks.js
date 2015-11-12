@@ -38,7 +38,7 @@ var StacksManager = base.Manager.extend({
     });
 
     this._super(params, function (err, result, xhr) {
-      if (err) return manager.safe_complete(err, null, null, params, callback);
+      if (err) return manager.safe_complete(err, null, xhr, { error: error }, callback);
       manager.get({
         url: xhr.getResponseHeader('location'),
         success: success,
