@@ -88,7 +88,22 @@ var StacksManager = base.Manager.extend({
     params.url = this.urljoin(this.get_base_url(params), data.stack_name, params.id);
     params.headers['Content-Length'] = 0;
     this._super(params, callback);
-  }
+  },
+
+  _action: function (params, action, info, callback) {
+    var url = urljoin(this.get_base_url(params), params.id || params.data.id, "actions");
+    if (params.data && params.data.id) delete params.data.id;
+    params = this.prepare_params(params, url, "singular");
+    params.data[action] = info || null;
+    return this.client.post(params, callback);
+  },
+
+  suspend: function (params, callback) { return this._action(params, "suspend", null, callback); },
+  resume: function (params, callback) { return this._action(params, "resume", null, callback); },
+
+  cancel_update: function (params, callback) { return this._action(params, "cancel_update", null, callback); },
+
+  check: function (params, callback) { return this._actions(params, "check", null, callback); }
 });
 
 
