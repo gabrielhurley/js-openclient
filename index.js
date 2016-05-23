@@ -15,7 +15,8 @@ var openclient = {
       'image': require('./glance/versions'),
       'volume': require('./cinder/versions'),
       'object-store': require('./swift/versions'),
-      'orchestration': require('./heat/versions')
+      'orchestration': require('./heat/versions'),
+      'network': require('./neutron/versions')
     }
   },
 
@@ -39,7 +40,8 @@ var openclient = {
   ['Keystone', require("./keystone/v2.0/client")],
   ['Nova', require("./nova/v1.1/client")],
   ['Swift', require("./swift/v1/client")],
-  ['Heat', require("./heat/v1/client")]
+  ['Heat', require("./heat/v1/client")],
+  ['Neutron', require("./neutron/v2.0/client")]
 ].forEach(function (pair) {
   Object.defineProperty(openclient, pair[0], {
     get: function () {
