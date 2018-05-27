@@ -40,3 +40,6 @@ Session.vim
 # Cloud 9
 .c9revisions
 .settings
+
+# Eclipse
+.project
